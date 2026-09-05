@@ -22,27 +22,34 @@ jobs:
       - name: Run build_runner
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
+      - name: Disable Kotlin Incremental Compilation
+        run: echo "kotlin.incremental=false" >> android/gradle.properties
+
       - name: Build Android APK
         run: flutter build apk --release
 
       - name: Build Web
         run: flutter build web --release
 
-      - name: Build Windows
-        run: flutter build windows --release
-
       - name: Archive Web
         shell: pwsh
         run: Compress-Archive -Path build/web/* -DestinationPath build/web-release.zip
 
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Archive Windows
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows-release.zip
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: android-web-windows
+          name: assets
           path: |
             build/app/outputs/flutter-apk/app-release.apk
             build/web-release.zip
-            build/windows/x64/runner/Release/*
+            build/windows-release.zip
 
   build-ios:
     name: Build iOS
@@ -89,10 +96,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            android-web-windows/app-release.apk
-            android-web-windows/web-release.zip
+            assets/app-release.apk
+            assets/web-release.zip
+            assets/windows-release.zip
             ios-ipa/Planet-iOS.ipa
-          # For windows, we might want to zip the folder first in the build step, 
-          # but for simplicity we take the APK and Web here.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
