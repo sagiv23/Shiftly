@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'services/persistence_service.dart';
-import 'providers/shift_provider.dart';
+
 import 'providers/settings_provider.dart';
+import 'providers/shift_provider.dart';
 import 'screens/home_screen.dart';
+import 'services/persistence_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   final persistenceService = PersistenceService();
   await persistenceService.init();
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsProvider(persistenceService)),
-        ChangeNotifierProvider(create: (_) => ShiftProvider(persistenceService)),
+        ChangeNotifierProvider(
+          create: (_) => SettingsProvider(persistenceService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ShiftProvider(persistenceService),
+        ),
       ],
       child: const SalaryTrackerApp(),
     ),
@@ -29,7 +34,7 @@ class SalaryTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    
+
     return MaterialApp(
       title: 'Planet',
       debugShowCheckedModeBanner: false,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+
 import '../models/job_type.dart';
 import '../providers/shift_provider.dart';
 
@@ -9,7 +10,9 @@ class JobTypesScreen extends StatelessWidget {
 
   void _showEditDialog(BuildContext context, [JobType? job]) {
     final nameController = TextEditingController(text: job?.name ?? '');
-    final rateController = TextEditingController(text: job?.hourlyRate.toString() ?? '40.22');
+    final rateController = TextEditingController(
+      text: job?.hourlyRate.toString() ?? '40.22',
+    );
 
     showDialog(
       context: context,
@@ -18,21 +21,33 @@ class JobTypesScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Job Name')),
-            TextField(controller: rateController, decoration: const InputDecoration(labelText: 'Hourly Rate'), keyboardType: TextInputType.number),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Job Name'),
+            ),
+            TextField(
+              controller: rateController,
+              decoration: const InputDecoration(labelText: 'Hourly Rate'),
+              keyboardType: TextInputType.number,
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               final provider = context.read<ShiftProvider>();
               if (job == null) {
-                provider.addJobType(JobType(
-                  id: const Uuid().v4(),
-                  name: nameController.text,
-                  hourlyRate: double.tryParse(rateController.text) ?? 40.22,
-                ));
+                provider.addJobType(
+                  JobType(
+                    id: const Uuid().v4(),
+                    name: nameController.text,
+                    hourlyRate: double.tryParse(rateController.text) ?? 40.22,
+                  ),
+                );
               } else {
                 job.name = nameController.text;
                 job.hourlyRate = double.tryParse(rateController.text) ?? 40.22;
@@ -63,10 +78,14 @@ class JobTypesScreen extends StatelessWidget {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => _showEditDialog(context, job)),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _showEditDialog(context, job),
+                ),
                 IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () => context.read<ShiftProvider>().deleteJobType(job.id),
+                  onPressed: () =>
+                      context.read<ShiftProvider>().deleteJobType(job.id),
                 ),
               ],
             ),

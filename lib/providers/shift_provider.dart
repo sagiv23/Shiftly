@@ -1,16 +1,18 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+
 import '../models/job_type.dart';
 import '../models/shift.dart';
 import '../services/persistence_service.dart';
-import 'package:collection/collection.dart';
 
 class ShiftProvider with ChangeNotifier {
   final PersistenceService _persistence;
 
   ShiftProvider(this._persistence);
 
-  List<Shift> get shifts => _persistence.shiftsBox.values.toList()
-    ..sort((a, b) => b.date.compareTo(a.date));
+  List<Shift> get shifts =>
+      _persistence.shiftsBox.values.toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
 
   List<JobType> get jobTypes => _persistence.jobTypesBox.values.toList();
 
@@ -49,6 +51,9 @@ class ShiftProvider with ChangeNotifier {
   }
 
   Map<String, List<Shift>> get shiftsGroupedByMonth {
-    return groupBy(shifts, (Shift s) => "${s.date.year}-${s.date.month.toString().padLeft(2, '0')}");
+    return groupBy(
+      shifts,
+      (Shift s) => "${s.date.year}-${s.date.month.toString().padLeft(2, '0')}",
+    );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../providers/shift_provider.dart';
+import 'package:provider/provider.dart';
+
 import '../models/shift.dart';
+import '../providers/shift_provider.dart';
 import 'add_shift_screen.dart';
 import 'job_types_screen.dart';
 import 'settings_screen.dart';
@@ -65,7 +66,7 @@ class _MonthSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
-    
+
     double totalNetHours = 0;
     double totalBaseSalary = 0;
     double totalTips = 0;
@@ -102,12 +103,22 @@ class _MonthSection extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _SummaryItem(label: 'Hours', value: totalNetHours.toStringAsFixed(2)),
-                      _SummaryItem(label: 'Salary', value: "₪${totalBaseSalary.toStringAsFixed(2)}"),
-                      _SummaryItem(label: 'Tips', value: "₪${totalTips.toStringAsFixed(2)}"),
                       _SummaryItem(
-                        label: 'Total', 
-                        value: "₪${(totalBaseSalary + totalTips).toStringAsFixed(2)}",
+                        label: 'Hours',
+                        value: totalNetHours.toStringAsFixed(2),
+                      ),
+                      _SummaryItem(
+                        label: 'Salary',
+                        value: "₪${totalBaseSalary.toStringAsFixed(2)}",
+                      ),
+                      _SummaryItem(
+                        label: 'Tips',
+                        value: "₪${totalTips.toStringAsFixed(2)}",
+                      ),
+                      _SummaryItem(
+                        label: 'Total',
+                        value:
+                            "₪${(totalBaseSalary + totalTips).toStringAsFixed(2)}",
                         isBold: true,
                       ),
                     ],
@@ -128,7 +139,11 @@ class _SummaryItem extends StatelessWidget {
   final String value;
   final bool isBold;
 
-  const _SummaryItem({required this.label, required this.value, this.isBold = false});
+  const _SummaryItem({
+    required this.label,
+    required this.value,
+    this.isBold = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -172,9 +187,7 @@ class _ShiftTile extends StatelessWidget {
         shiftProvider.deleteShift(shift.id);
       },
       child: ListTile(
-        leading: CircleAvatar(
-          child: Text(DateFormat.d().format(shift.date)),
-        ),
+        leading: CircleAvatar(child: Text(DateFormat.d().format(shift.date))),
         title: Text(job?.name ?? 'Unknown'),
         subtitle: Text(
           "${DateFormat.Hm().format(shift.startTime)} - ${DateFormat.Hm().format(shift.endTime)} "
@@ -184,9 +197,15 @@ class _ShiftTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text("₪${pay.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              "₪${pay.toStringAsFixed(2)}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             if (shift.tips > 0)
-              Text("+₪${shift.tips.toStringAsFixed(0)} tip", style: const TextStyle(fontSize: 10, color: Colors.green)),
+              Text(
+                "+₪${shift.tips.toStringAsFixed(0)} tip",
+                style: const TextStyle(fontSize: 10, color: Colors.green),
+              ),
           ],
         ),
       ),

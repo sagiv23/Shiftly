@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+
 import '../models/job_type.dart';
 import '../models/shift.dart';
 
@@ -9,7 +10,7 @@ class PersistenceService {
 
   Future<void> init() async {
     await Hive.initFlutter();
-    
+
     // Register Adapters (Note: These will be generated)
     Hive.registerAdapter(JobTypeAdapter());
     Hive.registerAdapter(ShiftAdapter());
@@ -17,7 +18,7 @@ class PersistenceService {
     await Hive.openBox<Shift>(shiftsBoxName);
     await Hive.openBox<JobType>(jobTypesBoxName);
     await Hive.openBox<dynamic>(settingsBoxName);
-    
+
     // Seed default job types if empty
     final jobBox = Hive.box<JobType>(jobTypesBoxName);
     if (jobBox.isEmpty) {
@@ -30,6 +31,8 @@ class PersistenceService {
   }
 
   Box<Shift> get shiftsBox => Hive.box<Shift>(shiftsBoxName);
+
   Box<JobType> get jobTypesBox => Hive.box<JobType>(jobTypesBoxName);
+
   Box<dynamic> get settingsBox => Hive.box<dynamic>(settingsBoxName);
 }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import '../models/shift.dart';
+
 import '../models/job_type.dart';
-import '../providers/shift_provider.dart';
+import '../models/shift.dart';
 import '../providers/settings_provider.dart';
+import '../providers/shift_provider.dart';
 import '../services/shift_parser.dart';
 
 class AddShiftScreen extends StatefulWidget {
@@ -15,16 +16,19 @@ class AddShiftScreen extends StatefulWidget {
   State<AddShiftScreen> createState() => _AddShiftScreenState();
 }
 
-class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProviderStateMixin {
+class _AddShiftScreenState extends State<AddShiftScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Manual Form State
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 17, minute: 0);
   String? _selectedJobTypeId;
-  final TextEditingController _tipsController = TextEditingController(text: '0');
-  
+  final TextEditingController _tipsController = TextEditingController(
+    text: '0',
+  );
+
   // Raw Paste State
   final TextEditingController _rawTextController = TextEditingController();
 
@@ -41,8 +45,20 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
   void _saveManual() {
     if (_selectedJobTypeId == null) return;
 
-    final start = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, _startTime.hour, _startTime.minute);
-    var end = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, _endTime.hour, _endTime.minute);
+    final start = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _startTime.hour,
+      _startTime.minute,
+    );
+    var end = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _endTime.hour,
+      _endTime.minute,
+    );
 
     if (end.isBefore(start)) {
       end = end.add(const Duration(days: 1));
@@ -72,13 +88,13 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
   void _saveRaw() {
     if (_selectedJobTypeId == null) return;
     final settings = context.read<SettingsProvider>();
-    
+
     final lines = _rawTextController.text.split('\n');
     int addedCount = 0;
 
     for (var line in lines) {
       if (line.trim().isEmpty) continue;
-      
+
       final shift = ShiftParser.parse(line, _selectedJobTypeId!);
       if (shift != null) {
         // Apply break logic
@@ -94,7 +110,9 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not parse any shifts. Check format.')),
+        const SnackBar(
+          content: Text('Could not parse any shifts. Check format.'),
+        ),
       );
     }
   }
@@ -116,10 +134,7 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildManualForm(jobs),
-          _buildRawForm(jobs),
-        ],
+        children: [_buildManualForm(jobs), _buildRawForm(jobs)],
       ),
     );
   }
@@ -147,7 +162,10 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
             title: const Text('Start Time'),
             subtitle: Text(_startTime.format(context)),
             onTap: () async {
-              final picked = await showTimePicker(context: context, initialTime: _startTime);
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: _startTime,
+              );
               if (picked != null) setState(() => _startTime = picked);
             },
           ),
@@ -155,14 +173,24 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
             title: const Text('End Time'),
             subtitle: Text(_endTime.format(context)),
             onTap: () async {
-              final picked = await showTimePicker(context: context, initialTime: _endTime);
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: _endTime,
+              );
               if (picked != null) setState(() => _endTime = picked);
             },
           ),
           DropdownButtonFormField<String>(
             value: _selectedJobTypeId,
             decoration: const InputDecoration(labelText: 'Job Type'),
-            items: jobs.map((j) => DropdownMenuItem<String>(value: j.id, child: Text(j.name))).toList(),
+            items: jobs
+                .map(
+                  (j) => DropdownMenuItem<String>(
+                    value: j.id,
+                    child: Text(j.name),
+                  ),
+                )
+                .toList(),
             onChanged: (val) => setState(() => _selectedJobTypeId = val),
           ),
           TextField(
@@ -173,7 +201,9 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: _saveManual,
-            style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+            ),
             child: const Text('Save Shift'),
           ),
         ],
@@ -188,8 +218,17 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
         children: [
           DropdownButtonFormField<String>(
             value: _selectedJobTypeId,
-            decoration: const InputDecoration(labelText: 'Default Job Type for Paste'),
-            items: jobs.map((j) => DropdownMenuItem<String>(value: j.id, child: Text(j.name))).toList(),
+            decoration: const InputDecoration(
+              labelText: 'Default Job Type for Paste',
+            ),
+            items: jobs
+                .map(
+                  (j) => DropdownMenuItem<String>(
+                    value: j.id,
+                    child: Text(j.name),
+                  ),
+                )
+                .toList(),
             onChanged: (val) => setState(() => _selectedJobTypeId = val),
           ),
           const SizedBox(height: 16),
@@ -212,7 +251,9 @@ class _AddShiftScreenState extends State<AddShiftScreen> with SingleTickerProvid
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _saveRaw,
-            style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+            ),
             child: const Text('Parse & Save'),
           ),
         ],

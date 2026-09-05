@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-import 'job_type.dart';
 
 part 'shift.g.dart';
 

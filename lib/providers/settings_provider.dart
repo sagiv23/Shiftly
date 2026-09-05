@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/persistence_service.dart';
 
 class SettingsProvider with ChangeNotifier {
@@ -13,12 +14,15 @@ class SettingsProvider with ChangeNotifier {
   double _breakDurationMinutes = 45.0;
 
   ThemeMode get themeMode => _themeMode;
+
   double get breakThresholdHours => _breakThresholdHours;
+
   double get breakDurationMinutes => _breakDurationMinutes;
 
   void _loadSettings() {
     final box = _persistence.settingsBox;
-    _themeMode = ThemeMode.values[box.get('themeMode', defaultValue: ThemeMode.system.index)];
+    _themeMode = ThemeMode
+        .values[box.get('themeMode', defaultValue: ThemeMode.system.index)];
     _breakThresholdHours = box.get('breakThresholdHours', defaultValue: 9.0);
     _breakDurationMinutes = box.get('breakDurationMinutes', defaultValue: 45.0);
     notifyListeners();

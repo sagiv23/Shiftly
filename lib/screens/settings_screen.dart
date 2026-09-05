@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/settings_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -17,8 +18,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     final settings = context.read<SettingsProvider>();
-    _thresholdController = TextEditingController(text: settings.breakThresholdHours.toString());
-    _durationController = TextEditingController(text: settings.breakDurationMinutes.toString());
+    _thresholdController = TextEditingController(
+      text: settings.breakThresholdHours.toString(),
+    );
+    _durationController = TextEditingController(
+      text: settings.breakDurationMinutes.toString(),
+    );
   }
 
   @override
@@ -33,15 +38,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Text('Theme', style: TextStyle(fontWeight: FontWeight.bold)),
           SegmentedButton<ThemeMode>(
             segments: const [
-              ButtonSegment(value: ThemeMode.system, label: Text('System'), icon: Icon(Icons.brightness_auto)),
-              ButtonSegment(value: ThemeMode.light, label: Text('Light'), icon: Icon(Icons.light_mode)),
-              ButtonSegment(value: ThemeMode.dark, label: Text('Dark'), icon: Icon(Icons.dark_mode)),
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text('System'),
+                icon: Icon(Icons.brightness_auto),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text('Light'),
+                icon: Icon(Icons.light_mode),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                label: Text('Dark'),
+                icon: Icon(Icons.dark_mode),
+              ),
             ],
             selected: {settings.themeMode},
             onSelectionChanged: (val) => settings.setThemeMode(val.first),
           ),
           const SizedBox(height: 32),
-          const Text('Break Rules', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Break Rules',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const Text(
             'Automatically deduct break time if shift duration exceeds threshold.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
@@ -49,22 +69,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _thresholdController,
-            decoration: const InputDecoration(labelText: 'Threshold (Hours)', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Threshold (Hours)',
+              border: OutlineInputBorder(),
+            ),
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _durationController,
-            decoration: const InputDecoration(labelText: 'Deduction (Minutes)', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Deduction (Minutes)',
+              border: OutlineInputBorder(),
+            ),
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              final threshold = double.tryParse(_thresholdController.text) ?? 9.0;
-              final duration = double.tryParse(_durationController.text) ?? 45.0;
+              final threshold =
+                  double.tryParse(_thresholdController.text) ?? 9.0;
+              final duration =
+                  double.tryParse(_durationController.text) ?? 45.0;
               settings.setBreakRules(threshold, duration);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Settings saved')));
             },
             child: const Text('Save Rules'),
           ),
