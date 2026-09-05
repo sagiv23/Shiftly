@@ -9,17 +9,14 @@ class ShiftParser {
   /// Parses strings like:
   /// "24.6.2026 - 17:00 - 23:00 ללא + 50"
   /// "24.6 - 17:00 - 23:00 45 + 50"
-  static Shift? parse(
-    String input,
-    String jobTypeId,
-  ) {
+  static Shift? parse(String input, String jobTypeId) {
     try {
       input = input.trim();
 
       // Updated Regex to include optional break description before the '+'
-      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [Break] [+ tips]
+      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [Break Description] [+ tips]
       final regex = RegExp(
-        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(.*?)\s*(?:\+\s*(\d+))?',
+        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(.*?)(?:\s*\+\s*(\d+))?\s*$',
         caseSensitive: false,
       );
 

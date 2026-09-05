@@ -64,37 +64,75 @@ class JobTypesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final jobs = context.watch<ShiftProvider>().jobTypes;
+    final rawJobs = context.watch<ShiftProvider>().jobTypes;
+    final jobs = List<JobType>.from(rawJobs)
+      ..sort((a, b) {
+        if (a.name.contains('מזנון')) return -1;
+        if (b.name.contains('מזנון')) return 1;
+        if (a.name.contains('סדרן')) return -1;
+        if (b.name.contains('סדרן')) return 1;
+        return a.name.compareTo(b.name);
+      });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('סוגי עבודות')),
-      body: ListView.builder(
-        itemCount: jobs.length,
-        itemBuilder: (context, index) {
-          final job = jobs[index];
-          return ListTile(
-            title: Text(job.name),
-            subtitle: Text("תעריף: ₪${job.hourlyRate.toStringAsFixed(2)}"),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _showEditDialog(context, job),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () =>
-                      context.read<ShiftProvider>().deleteJobType(job.id),
-                ),
-              ],
-            ),
-          );
-        },
+      appBar: AppBar(
+        title: const Text(
+          'סוגי עבודות',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
+      body: jobs.isEmpty
+          ? const Center(child: Text('לא נמצאו תפקידים.'))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: jobs.length,
+              itemBuilder: (context, index) {
+                final job = jobs[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Card(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      title: Text(
+                        job.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        "תעריף שעתי: ₪${job.hourlyRate.toStringAsFixed(2)}",
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit_note_rounded,
+                              color: Colors.blue,
+                            ),
+                            onPressed: () => _showEditDialog(context, job),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: Colors.red,
+                            ),
+                            onPressed: () => context
+                                .read<ShiftProvider>()
+                                .deleteJobType(job.id),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showEditDialog(context),
-        child: const Icon(Icons.add),
+        label: const Text('הוסף תפקיד'),
+        icon: const Icon(Icons.add_task_rounded),
       ),
     );
   }

@@ -1,55 +1,56 @@
-# Planet - Sagiv23
+# Shiftly - Sagiv23
 
-A minimal, high-performance Flutter app for tracking work shifts and calculating monthly salaries.
-Built with Material 3, Provider, and Hive.
+אפליקציית Flutter מודרנית ומהירה למעקב אחר משמרות עבודה וחישוב שכר חודשי מדויק.
+מעוצבת ברוח Material 3, עם תמיכה מלאה בעברית (RTL) ואוטומציה לחיסכון בזמן.
 
-## The Core Problem
+## מה הבעיה שאנחנו פותרים?
 
-Most work trackers require too much tapping. **Planet** focuses on speed—allowing you to log shifts
-either manually or by pasting raw text from WhatsApp/Notes.
+רישום משמרות ידני הוא תהליך מעייף. **Shiftly** נבנתה כדי לאפשר תיעוד של שבועות עבודה שלמים בשניות -
+על ידי הדבקה חופשית של טקסט מהודעות או פתקים.
 
-## What it does
+## תכונות מרכזיות
 
-- **Smart Parsing:** Paste strings like `24.6 - 17:30 - 23:00 + 50 tip` and let the app handle the
-  rest.
-- **Overnight Support:** Correctly calculates duration for shifts that cross midnight (e.g., 22:00
-  to 06:00).
-- **Auto-Breaks:** Configurable rules (default: -45 mins for shifts >= 9 hours).
-- **Job Management:** Define custom roles (Sitter, Bar, Logistics) with specific hourly rates.
-- **Monthly Summaries:** Grouped history with net hours, base pay, and tips calculated
-  automatically.
-- **Offline First:** All data is stored locally using Hive for near-instant load times.
+- **פיענוח טקסט חכם:** הדבקת משמרות בפורמט חופשי הכולל תאריך, שעות, סוג הפסקה וטיפים.
+- **ניהול הפסקות גמיש:** בחירה בין "ללא", "20 דקות" (כלול בשכר) או "45 דקות" (יורד מהשכר).
+- **תצוגה חודשית חכמה:** סיכום שכר בסיס, טיפים וסה"כ לתשלום בכל חודש בבלוקים מתקפלים נוחים.
+- **תמיכה במשמרות לילה:** חישוב מדויק של שעות למשמרות המסתיימות ביום שאחרי.
+- **ניהול תפקידים:** הגדרת תעריפים שעתיים מותאמים אישית (ברירת מחדל: מזנון 40.22, סדרן 37.20).
+- **חוויית שימוש פרימיום:** אנימציות חלקות, מסך Splash מעוצב, וממשק RTL מלא.
+- **אבטחת נתונים:** כל המידע נשמר מקומית על המכשיר (Hive) לביצועים מקסימליים ופרטיות.
 
-## Text Parsing Format
+## פורמט הדבקה חופשית
 
-The parser looks for the following pattern:
-`[Day].[Month] - [Start Time] - [End Time] + [Optional Tip]`
+המערכת מזהה את הפורמט הבא:
+`[יום].[חודש].[שנה] - [שעת התחלה] - [שעת סיום] [סוג הפסקה] + [טיפ]`
 
-**Example:**
-`24.6 - 17:30 - 23:00 + 50`
-*(Result: June 24th, 5.5 hours, 50₪ tip)*
+**דוגמאות:**
 
-## Tech Stack
+- `24.06.2026 - 17:00 - 23:00 45 דקות + 50`
+- `24.06 - 08:00 - 14:00 ללא + 20`
+- `01.07 - 19:00 - 01:00 20 דקות`
 
-- **State:** Provider
+## טכנולוגיות
+
+- **State Management:** Provider
 - **Storage:** Hive (NoSQL)
-- **UI:** Material 3 (Supports System Light/Dark modes)
-- **CI/CD:** GitHub Actions for automated multi-platform builds.
+- **Design:** Material 3, Custom animations
+- **Localizations:** Hebrew (he_IL), RTL Support
 
-## Deployment & Releases
+## הפצה ושחרור גרסאות
 
-Builds are automated via GitHub Actions. To trigger a new release:
+הבנייה מתבצעת אוטומטית דרך GitHub Actions. כדי להוציא גרסה חדשה לכל הפלטפורמות (Android, iOS,
+Windows, Web):
 
-1. Tag your commit: `git tag v1.0.0`
-2. Push the tag: `git push origin v1.0.0`
-3. Download the APK/IPA/EXE from the **Releases** tab.
+1. צור Tag חדש: `git tag v1.0.x`
+2. דחף את ה-Tag: `git push origin v1.0.x`
+3. הקבצים ימתינו להורדה בדף ה-**Releases** של הפרויקט.
 
-## Local Development
+## פיתוח מקומי
 
 1. `flutter pub get`
 2. `dart run build_runner build --delete-conflicting-outputs`
 3. `flutter run`
 
-### Running Tests
+### הרצת טסטים
 
 `flutter test test/unit/shift_logic_test.dart`

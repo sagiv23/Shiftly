@@ -1,4 +1,4 @@
-app_identifier("com.example.planet")
+app_identifier("com.example.shiftly")
 apple_id("apple-developer@example.com") # TODO: Update with your Apple ID
 
 itc_team_id("12345678") # App Store Connect Team ID

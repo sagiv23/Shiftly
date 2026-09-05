@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../widgets/app_icon.dart';
 import 'home_screen.dart';
 
@@ -9,11 +10,38 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+
+    _controller.forward();
     _navigateToHome();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   _navigateToHome() async {
@@ -21,36 +49,73 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 800),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF1E293B),
-      body: Center(
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            EssentialWorkIcon(size: 200),
-            SizedBox(height: 40),
-            Text(
-              'Planet',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Arial',
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: const EssentialWorkIcon(size: 160),
               ),
             ),
-            SizedBox(height: 10),
-            Text(
-              'מעקב שעות עבודה חכם',
-              style: TextStyle(
+            const SizedBox(height: 40),
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: const Text(
+                'Shiftly',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 52,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Arial',
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: const Text(
+                'מעקב שעות עבודה חכם',
+                style: TextStyle(
+                  color: Color(0xFF38BDF8),
+                  fontSize: 18,
+                  fontFamily: 'Arial',
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 60),
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
                 color: Color(0xFF38BDF8),
-                fontSize: 18,
-                fontFamily: 'Arial',
+                strokeWidth: 3,
               ),
             ),
           ],

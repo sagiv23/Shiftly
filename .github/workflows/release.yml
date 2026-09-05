@@ -81,23 +81,24 @@ jobs:
         run: |
           mkdir Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -r Planet-iOS.ipa Payload
+          zip -r Shiftly-iOS.ipa Payload
 
       - name: Upload iOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
-          path: Planet-iOS.ipa
+          path: Shiftly-iOS.ipa
 
   create-release:
     name: Create GitHub Release
-    needs: [build-android-web-windows, build-ios]
+    needs: [ build-android-web-windows, build-ios ]
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
           path: release-assets
+          merge-multiple: true
 
       - name: List files
         run: ls -R release-assets
@@ -106,9 +107,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-assets/all-assets/app-release.apk
-            release-assets/all-assets/web-release.zip
-            release-assets/all-assets/windows-release.zip
-            release-assets/ios-ipa/Planet-iOS.ipa
+            release-assets/app-release.apk
+            release-assets/web-release.zip
+            release-assets/windows-release.zip
+            release-assets/Shiftly-iOS.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
