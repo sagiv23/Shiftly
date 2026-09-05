@@ -95,12 +95,12 @@ BEGIN
 BEGIN
         VALUE
 "CompanyName", "com.example" "\0"
-VALUE "FileDescription", "temp" "\0"
+VALUE "FileDescription", "shiftly" "\0"
 VALUE "FileVersion", VERSION_AS_STRING "\0"
-VALUE "InternalName", "temp" "\0"
+VALUE "InternalName", "shiftly" "\0"
 VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-VALUE "OriginalFilename", "temp.exe" "\0"
-VALUE "ProductName", "temp" "\0"
+VALUE "OriginalFilename", "shiftly.exe" "\0"
+VALUE "ProductName", "shiftly" "\0"
 VALUE "ProductVersion", VERSION_AS_STRING "\0"
 END
         END

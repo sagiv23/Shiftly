@@ -48,7 +48,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       _endTime = TimeOfDay.fromDateTime(s.endTime);
       _selectedJobTypeId = s.jobTypeId;
       _tipsController = TextEditingController(text: s.tips.toString());
-      _selectedBreakType = s.breakType;
+      _selectedBreakType = s.breakType ?? BreakType.none;
     } else {
       _selectedDate = DateTime.now();
       _startTime = const TimeOfDay(hour: 9, minute: 0);

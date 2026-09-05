@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:planet/models/break_type.dart';
-import 'package:planet/models/shift.dart';
-import 'package:planet/services/shift_parser.dart';
+import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/services/shift_parser.dart';
 
 void main() {
   group('Shift Model Logic', () {

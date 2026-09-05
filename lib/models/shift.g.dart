@@ -23,7 +23,7 @@ class ShiftAdapter extends TypeAdapter<Shift> {
       endTime: fields[3] as DateTime,
       jobTypeId: fields[4] as String,
       tips: fields[5] as double,
-      breakType: fields[7] as BreakType,
+      breakType: fields[7] as BreakType?,
     );
   }
 

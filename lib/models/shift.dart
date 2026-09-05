@@ -25,7 +25,7 @@ class Shift extends HiveObject {
   double tips;
 
   @HiveField(7)
-  BreakType breakType;
+  BreakType? breakType;
 
   Shift({
     required this.id,
@@ -49,7 +49,7 @@ class Shift extends HiveObject {
   double get netHours {
     // ONLY deduct if it's explicitly a 45 min unpaid break.
     // 20 min paid break does NOT deduct anything.
-    if (breakType == BreakType.fortyFiveMinUnpaid) {
+    if ((breakType ?? BreakType.none) == BreakType.fortyFiveMinUnpaid) {
       return durationHours - 0.75; // 45 minutes = 0.75 hours
     }
     return durationHours;
