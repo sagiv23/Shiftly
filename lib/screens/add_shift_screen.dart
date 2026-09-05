@@ -3,9 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/break_type.dart';
 import '../models/job_type.dart';
 import '../models/shift.dart';
-import '../providers/settings_provider.dart';
 import '../providers/shift_provider.dart';
 import '../services/shift_parser.dart';
 
@@ -28,6 +28,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   final TextEditingController _tipsController = TextEditingController(
     text: '0',
   );
+  BreakType _selectedBreakType = BreakType.none;
 
   // Raw Paste State
   final TextEditingController _rawTextController = TextEditingController();
@@ -39,6 +40,16 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final jobs = context.read<ShiftProvider>().jobTypes;
     if (jobs.isNotEmpty) {
       _selectedJobTypeId = jobs.first.id;
+    }
+  }
+
+  double _getBreakDeduction(BreakType type) {
+    switch (type) {
+      case BreakType.none:
+      case BreakType.twentyMinPaid:
+        return 0.0;
+      case BreakType.fortyFiveMinUnpaid:
+        return 45.0;
     }
   }
 
@@ -64,13 +75,6 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       end = end.add(const Duration(days: 1));
     }
 
-    final durationHours = end.difference(start).inMinutes / 60.0;
-    final settings = context.read<SettingsProvider>();
-    double breakMins = 0;
-    if (durationHours >= settings.breakThresholdHours) {
-      breakMins = settings.breakDurationMinutes;
-    }
-
     final shift = Shift(
       id: const Uuid().v4(),
       date: _selectedDate,
@@ -78,7 +82,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       endTime: end,
       jobTypeId: _selectedJobTypeId!,
       tips: double.tryParse(_tipsController.text) ?? 0,
-      breakMinutes: breakMins,
+      breakMinutes: _getBreakDeduction(_selectedBreakType),
+      breakType: _selectedBreakType,
     );
 
     context.read<ShiftProvider>().addShift(shift);
@@ -87,7 +92,6 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
   void _saveRaw() {
     if (_selectedJobTypeId == null) return;
-    final settings = context.read<SettingsProvider>();
 
     final lines = _rawTextController.text.split('\n');
     int addedCount = 0;
@@ -95,12 +99,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     for (var line in lines) {
       if (line.trim().isEmpty) continue;
 
+      // Note: Raw parser currently defaults to 'none' break type
+      // since we don't have a format for break in text yet.
       final shift = ShiftParser.parse(line, _selectedJobTypeId!);
       if (shift != null) {
-        // Apply break logic
-        if (shift.durationHours >= settings.breakThresholdHours) {
-          shift.breakMinutes = settings.breakDurationMinutes;
-        }
         context.read<ShiftProvider>().addShift(shift);
         addedCount++;
       }
@@ -143,10 +145,11 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
             title: const Text('Date'),
-            subtitle: Text(DateFormat.yMMMd().format(_selectedDate)),
+            subtitle: Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
               final picked = await showDatePicker(
@@ -180,6 +183,31 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               if (picked != null) setState(() => _endTime = picked);
             },
           ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              'Break Type',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          SegmentedButton<BreakType>(
+            segments: const [
+              ButtonSegment(value: BreakType.none, label: Text('None')),
+              ButtonSegment(
+                value: BreakType.twentyMinPaid,
+                label: Text('20m (Paid)'),
+              ),
+              ButtonSegment(
+                value: BreakType.fortyFiveMinUnpaid,
+                label: Text('45m (Unpaid)'),
+              ),
+            ],
+            selected: {_selectedBreakType},
+            onSelectionChanged: (val) =>
+                setState(() => _selectedBreakType = val.first),
+          ),
+          const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _selectedJobTypeId,
             decoration: const InputDecoration(labelText: 'Job Type'),
@@ -195,7 +223,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
           TextField(
             controller: _tipsController,
-            decoration: const InputDecoration(labelText: 'Tips (₪)'),
+            decoration: InputDecoration(
+              labelText: 'Tips (₪)',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () => _tipsController.text = '0',
+              ),
+            ),
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 32),
@@ -233,7 +267,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
           const SizedBox(height: 16),
           const Text(
-            'Format: DD.MM - HH:mm - HH:mm [+ tips]\nExample: 24.6 - 17:30 - 23:00 + 50',
+            'Format: DD.MM[.YYYY] - HH:mm - HH:mm [+ tips]\nExample: 24.6.2026 - 17:30 - 23:00 + 50',
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 8),

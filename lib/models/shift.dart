@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 
+import 'break_type.dart';
+
 part 'shift.g.dart';
 
 @HiveType(typeId: 1)
@@ -25,6 +27,9 @@ class Shift extends HiveObject {
   @HiveField(6)
   double breakMinutes;
 
+  @HiveField(7)
+  BreakType breakType;
+
   Shift({
     required this.id,
     required this.date,
@@ -33,6 +38,7 @@ class Shift extends HiveObject {
     required this.jobTypeId,
     this.tips = 0.0,
     this.breakMinutes = 0.0,
+    this.breakType = BreakType.none,
   });
 
   double get durationHours {

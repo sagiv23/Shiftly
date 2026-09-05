@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Triggers on tags like v1.0.0
 
+permissions:
+  contents: write
+
 jobs:
   build-android-web-windows:
     name: Build Android, Web & Windows
@@ -42,14 +45,19 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows-release.zip
 
+      - name: Prepare Assets for Upload
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path staging -Force
+          Copy-Item build/app/outputs/flutter-apk/app-release.apk staging/
+          Copy-Item build/web-release.zip staging/
+          Copy-Item build/windows-release.zip staging/
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: assets
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/web-release.zip
-            build/windows-release.zip
+          name: all-assets
+          path: staging/*
 
   build-ios:
     name: Build iOS
@@ -83,22 +91,24 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [ build-android-web-windows, build-ios ]
+    needs: [build-android-web-windows, build-ios]
     runs-on: ubuntu-latest
     steps:
-      - name: Download all artifacts
+      - name: Download Artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: release-assets
 
       - name: List files
-        run: ls -R
+        run: ls -R release-assets
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            assets/app-release.apk
-            assets/web-release.zip
-            assets/windows-release.zip
-            ios-ipa/Planet-iOS.ipa
+            release-assets/all-assets/app-release.apk
+            release-assets/all-assets/web-release.zip
+            release-assets/all-assets/windows-release.zip
+            release-assets/ios-ipa/Planet-iOS.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

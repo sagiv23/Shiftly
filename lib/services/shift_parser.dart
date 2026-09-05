@@ -1,23 +1,25 @@
 import 'package:uuid/uuid.dart';
 
+import '../models/break_type.dart';
 import '../models/shift.dart';
 
 class ShiftParser {
   static final Uuid _uuid = const Uuid();
 
-  /// Parses strings like "24.6 - 17:30 - 23:00" or "22.7 - 07:00 - 13:00 + 50 tip"
+  /// Parses strings like "24.6 - 17:30 - 23:00" or "22.7.2026 - 07:00 - 13:00 + 50"
   static Shift? parse(
     String input,
     String jobTypeId, {
     double breakMinutes = 0,
+    BreakType breakType = BreakType.none,
   }) {
     try {
       input = input.trim();
 
       // Regex to capture Date, StartTime, EndTime, and optional Tips
-      // Format: DD.MM - HH:mm - HH:mm [+ tips tip]
+      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [+ tips]
       final regex = RegExp(
-        r'(\d{1,2}\.\d{1,2})\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})(?:\s*\+\s*(\d+))?',
+        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})(?:\s*\+\s*(\d+))?',
         caseSensitive: false,
       );
 
@@ -34,7 +36,13 @@ class ShiftParser {
       final day = int.parse(dateParts[0]);
       final month = int.parse(dateParts[1]);
 
-      final date = DateTime(now.year, month, day);
+      int year = now.year;
+      if (dateParts.length == 3) {
+        year = int.parse(dateParts[2]);
+        if (year < 100) year += 2000; // Handle 2-digit year
+      }
+
+      final date = DateTime(year, month, day);
 
       final startTimeParts = startTimeStr.split(':');
       final start = DateTime(
@@ -69,6 +77,7 @@ class ShiftParser {
         jobTypeId: jobTypeId,
         tips: tips,
         breakMinutes: breakMinutes,
+        breakType: breakType,
       );
     } catch (e) {
       return null;

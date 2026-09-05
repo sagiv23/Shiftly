@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../models/break_type.dart';
 import '../models/shift.dart';
 import '../providers/shift_provider.dart';
 import 'add_shift_screen.dart';
@@ -174,6 +175,13 @@ class _ShiftTile extends StatelessWidget {
     final rate = job?.hourlyRate ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
 
+    String breakInfo = "";
+    if (shift.breakType == BreakType.twentyMinPaid) {
+      breakInfo = " (20m paid break)";
+    } else if (shift.breakType == BreakType.fortyFiveMinUnpaid) {
+      breakInfo = " (45m unpaid break)";
+    }
+
     return Dismissible(
       key: Key(shift.id),
       direction: DismissDirection.endToStart,
@@ -188,8 +196,9 @@ class _ShiftTile extends StatelessWidget {
       },
       child: ListTile(
         leading: CircleAvatar(child: Text(DateFormat.d().format(shift.date))),
-        title: Text(job?.name ?? 'Unknown'),
+        title: Text("${job?.name ?? 'Unknown'}$breakInfo"),
         subtitle: Text(
+          "${DateFormat('dd/MM/yyyy').format(shift.date)} | "
           "${DateFormat.Hm().format(shift.startTime)} - ${DateFormat.Hm().format(shift.endTime)} "
           "(${shift.netHours.toStringAsFixed(2)}h)",
         ),

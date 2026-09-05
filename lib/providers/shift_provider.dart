@@ -47,7 +47,12 @@ class ShiftProvider with ChangeNotifier {
   }
 
   JobType? getJobTypeById(String id) {
-    return _persistence.jobTypesBox.get(id);
+    // Try key lookup first
+    var job = _persistence.jobTypesBox.get(id);
+    if (job != null) return job;
+
+    // Fallback: search by id field in case keys are indexed differently
+    return jobTypes.firstWhereOrNull((j) => j.id == id);
   }
 
   Map<String, List<Shift>> get shiftsGroupedByMonth {
