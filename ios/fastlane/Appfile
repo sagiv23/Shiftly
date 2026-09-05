@@ -1,0 +1,5 @@
+app_identifier("com.example.planet")
+apple_id("apple-developer@example.com") # TODO: Update with your Apple ID
+
+itc_team_id("12345678") # App Store Connect Team ID
+team_id("ABCDE12345") # Developer Portal Team ID

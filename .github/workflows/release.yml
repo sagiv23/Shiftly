@@ -1,0 +1,98 @@
+name: Multi-Platform Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on tags like v1.0.0
+
+jobs:
+  build-android-web-windows:
+    name: Build Android, Web & Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      
+      - name: Build Android APK
+        run: flutter build apk --release
+      
+      - name: Build Web
+        run: flutter build web --release
+      
+      - name: Build Windows
+        run: flutter build windows --release
+      
+      - name: Archive Web
+        shell: pwsh
+        run: Compress-Archive -Path build/web/* -DestinationPath build/web-release.zip
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-web-windows
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/web-release.zip
+            build/windows/x64/runner/Release/*
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      
+      # Build for simulator/testing without signing
+      - name: Build iOS (No Sign)
+        run: flutter build ios --release --no-codesign
+      
+      - name: Create Payload folder
+        run: |
+          mkdir Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r Planet-iOS.ipa Payload
+      
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: Planet-iOS.ipa
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-android-web-windows, build-ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+      
+      - name: List files
+        run: ls -R
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            android-web-windows/app-release.apk
+            android-web-windows/web-release.zip
+            ios-ipa/Planet-iOS.ipa
+          # For windows, we might want to zip the folder first in the build step, 
+          # but for simplicity we take the APK and Web here.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

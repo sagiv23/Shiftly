@@ -1,0 +1,30 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    # setup_ci # Only if using specific CI providers like CircleCI
+
+    # 1. Increment build number
+    increment_build_number(xcodeproj: "Runner.xcodeproj")
+
+    # 2. Build the app (assuming match is set up for code signing)
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store"
+    )
+
+    # 3. Upload to TestFlight
+    upload_to_testflight
+  end
+
+  desc "Build and sign the app"
+  lane :build do
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      export_method: "app-store"
+    )
+  end
+end
