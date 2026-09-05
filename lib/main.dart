@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/settings_provider.dart';
 import 'providers/shift_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/persistence_service.dart';
 import 'theme/app_theme.dart';
 
@@ -41,7 +42,14 @@ class SalaryTrackerApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: settings.themeMode,
-      home: const HomeScreen(),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('he', 'IL')],
+      locale: const Locale('he', 'IL'),
+      home: const SplashScreen(),
     );
   }
 }

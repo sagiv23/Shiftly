@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:planet/models/break_type.dart';
 import 'package:planet/models/shift.dart';
 import 'package:planet/services/shift_parser.dart';
 
@@ -42,7 +43,7 @@ void main() {
         startTime: start,
         endTime: end,
         jobTypeId: 'j1',
-        breakMinutes: 45,
+        breakType: BreakType.fortyFiveMinUnpaid,
       );
 
       expect(shift.durationHours, 10.0);

@@ -23,6 +23,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.work_outline),
+            tooltip: 'סוגי עבודות',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const JobTypesScreen()),
@@ -30,6 +31,7 @@ class HomeScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
+            tooltip: 'הגדרות',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -38,7 +40,7 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: groupedShifts.isEmpty
-          ? const Center(child: Text('No shifts logged yet.'))
+          ? const Center(child: Text('עדיין לא נרשמו משמרות.'))
           : ListView.builder(
               itemCount: groupedShifts.length,
               itemBuilder: (context, index) {
@@ -48,6 +50,7 @@ class HomeScreen extends StatelessWidget {
               },
             ),
       floatingActionButton: FloatingActionButton(
+        tooltip: 'הוסף משמרת',
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const AddShiftScreen()),
@@ -81,7 +84,7 @@ class _MonthSection extends StatelessWidget {
     }
 
     final date = DateTime.parse("$monthKey-01");
-    final monthName = DateFormat.MMMM().format(date);
+    final monthName = DateFormat.MMMM('he_IL').format(date);
     final year = date.year;
 
     return Column(
@@ -105,19 +108,19 @@ class _MonthSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _SummaryItem(
-                        label: 'Hours',
+                        label: 'שעות',
                         value: totalNetHours.toStringAsFixed(2),
                       ),
                       _SummaryItem(
-                        label: 'Salary',
+                        label: 'שכר בסיס',
                         value: "₪${totalBaseSalary.toStringAsFixed(2)}",
                       ),
                       _SummaryItem(
-                        label: 'Tips',
+                        label: 'טיפים',
                         value: "₪${totalTips.toStringAsFixed(2)}",
                       ),
                       _SummaryItem(
-                        label: 'Total',
+                        label: 'סה"כ',
                         value:
                             "₪${(totalBaseSalary + totalTips).toStringAsFixed(2)}",
                         isBold: true,
@@ -177,14 +180,14 @@ class _ShiftTile extends StatelessWidget {
 
     String breakInfo = "";
     if (shift.breakType == BreakType.twentyMinPaid) {
-      breakInfo = " (20m paid break)";
+      breakInfo = " (20 דק' בתשלום)";
     } else if (shift.breakType == BreakType.fortyFiveMinUnpaid) {
-      breakInfo = " (45m unpaid break)";
+      breakInfo = " (45 דק' ללא תשלום)";
     }
 
     return Dismissible(
       key: Key(shift.id),
-      direction: DismissDirection.endToStart,
+      direction: DismissDirection.startToEnd,
       background: Container(
         color: Colors.red,
         alignment: Alignment.centerRight,
@@ -196,11 +199,19 @@ class _ShiftTile extends StatelessWidget {
       },
       child: ListTile(
         leading: CircleAvatar(child: Text(DateFormat.d().format(shift.date))),
-        title: Text("${job?.name ?? 'Unknown'}$breakInfo"),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AddShiftScreen(shiftToEdit: shift),
+            ),
+          );
+        },
+        title: Text("${job?.name ?? 'לא ידוע'}$breakInfo"),
         subtitle: Text(
           "${DateFormat('dd/MM/yyyy').format(shift.date)} | "
           "${DateFormat.Hm().format(shift.startTime)} - ${DateFormat.Hm().format(shift.endTime)} "
-          "(${shift.netHours.toStringAsFixed(2)}h)",
+          "(${shift.netHours.toStringAsFixed(2)} ש') | ₪${rate.toStringAsFixed(2)} לשעה",
         ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -212,7 +223,7 @@ class _ShiftTile extends StatelessWidget {
             ),
             if (shift.tips > 0)
               Text(
-                "+₪${shift.tips.toStringAsFixed(0)} tip",
+                "+₪${shift.tips.toStringAsFixed(0)} טיפ",
                 style: const TextStyle(fontSize: 10, color: Colors.green),
               ),
           ],

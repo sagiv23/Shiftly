@@ -17,17 +17,17 @@ class JobTypesScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(job == null ? 'Add Job Type' : 'Edit Job Type'),
+        title: Text(job == null ? 'הוספת סוג עבודה' : 'עריכת סוג עבודה'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: 'Job Name'),
+              decoration: const InputDecoration(labelText: 'שם התפקיד'),
             ),
             TextField(
               controller: rateController,
-              decoration: const InputDecoration(labelText: 'Hourly Rate'),
+              decoration: const InputDecoration(labelText: 'תעריף שעתי'),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -35,7 +35,7 @@ class JobTypesScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('ביטול'),
           ),
           TextButton(
             onPressed: () {
@@ -55,7 +55,7 @@ class JobTypesScreen extends StatelessWidget {
               }
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: const Text('שמור'),
           ),
         ],
       ),
@@ -67,14 +67,14 @@ class JobTypesScreen extends StatelessWidget {
     final jobs = context.watch<ShiftProvider>().jobTypes;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Job Types')),
+      appBar: AppBar(title: const Text('סוגי עבודות')),
       body: ListView.builder(
         itemCount: jobs.length,
         itemBuilder: (context, index) {
           final job = jobs[index];
           return ListTile(
             title: Text(job.name),
-            subtitle: Text("Rate: ₪${job.hourlyRate.toStringAsFixed(2)}"),
+            subtitle: Text("תעריף: ₪${job.hourlyRate.toStringAsFixed(2)}"),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

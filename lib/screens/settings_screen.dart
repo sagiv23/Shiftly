@@ -31,26 +31,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text('הגדרות')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Theme', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'ערכת נושא',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
           SegmentedButton<ThemeMode>(
             segments: const [
               ButtonSegment(
                 value: ThemeMode.system,
-                label: Text('System'),
+                label: Text('מערכת'),
                 icon: Icon(Icons.brightness_auto),
               ),
               ButtonSegment(
                 value: ThemeMode.light,
-                label: Text('Light'),
+                label: Text('יום'),
                 icon: Icon(Icons.light_mode),
               ),
               ButtonSegment(
                 value: ThemeMode.dark,
-                label: Text('Dark'),
+                label: Text('לילה'),
                 icon: Icon(Icons.dark_mode),
               ),
             ],
@@ -59,18 +63,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 32),
           const Text(
-            'Break Rules',
+            'כללי הפסקה אוטומטיים',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           const Text(
-            'Automatically deduct break time if shift duration exceeds threshold.',
+            'המערכת תחסיר זמן הפסקה באופן אוטומטי אם משך המשמרת עולה על הסף שנקבע.',
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _thresholdController,
             decoration: const InputDecoration(
-              labelText: 'Threshold (Hours)',
+              labelText: 'סף שעות להפסקה',
               border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
@@ -79,7 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextField(
             controller: _durationController,
             decoration: const InputDecoration(
-              labelText: 'Deduction (Minutes)',
+              labelText: 'זמן הפסקה להחסרה (דקות)',
               border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
@@ -94,9 +98,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               settings.setBreakRules(threshold, duration);
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('Settings saved')));
+              ).showSnackBar(const SnackBar(content: Text('ההגדרות נשמרו')));
             },
-            child: const Text('Save Rules'),
+            child: const Text('שמור הגדרות'),
           ),
         ],
       ),

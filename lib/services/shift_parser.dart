@@ -6,20 +6,20 @@ import '../models/shift.dart';
 class ShiftParser {
   static final Uuid _uuid = const Uuid();
 
-  /// Parses strings like "24.6 - 17:30 - 23:00" or "22.7.2026 - 07:00 - 13:00 + 50"
+  /// Parses strings like:
+  /// "24.6.2026 - 17:00 - 23:00 ללא + 50"
+  /// "24.6 - 17:00 - 23:00 45 + 50"
   static Shift? parse(
     String input,
-    String jobTypeId, {
-    double breakMinutes = 0,
-    BreakType breakType = BreakType.none,
-  }) {
+    String jobTypeId,
+  ) {
     try {
       input = input.trim();
 
-      // Regex to capture Date, StartTime, EndTime, and optional Tips
-      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [+ tips]
+      // Updated Regex to include optional break description before the '+'
+      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [Break] [+ tips]
       final regex = RegExp(
-        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})(?:\s*\+\s*(\d+))?',
+        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(.*?)\s*(?:\+\s*(\d+))?',
         caseSensitive: false,
       );
 
@@ -29,7 +29,8 @@ class ShiftParser {
       final dateStr = match.group(1)!;
       final startTimeStr = match.group(2)!;
       final endTimeStr = match.group(3)!;
-      final tipsStr = match.group(4);
+      final breakStr = match.group(4)?.trim() ?? "";
+      final tipsStr = match.group(5);
 
       final now = DateTime.now();
       final dateParts = dateStr.split('.');
@@ -39,7 +40,7 @@ class ShiftParser {
       int year = now.year;
       if (dateParts.length == 3) {
         year = int.parse(dateParts[2]);
-        if (year < 100) year += 2000; // Handle 2-digit year
+        if (year < 100) year += 2000;
       }
 
       final date = DateTime(year, month, day);
@@ -62,9 +63,19 @@ class ShiftParser {
         int.parse(endTimeParts[1]),
       );
 
-      // Handle overnight shift
       if (end.isBefore(start)) {
         end = end.add(const Duration(days: 1));
+      }
+
+      // Determine BreakType from text
+      BreakType breakType = BreakType.none;
+
+      if (breakStr.contains('45 דקות')) {
+        breakType = BreakType.fortyFiveMinUnpaid;
+      } else if (breakStr.contains('20 דקות')) {
+        breakType = BreakType.twentyMinPaid;
+      } else if (breakStr.contains('ללא')) {
+        breakType = BreakType.none;
       }
 
       final tips = tipsStr != null ? double.tryParse(tipsStr) ?? 0.0 : 0.0;
@@ -76,7 +87,6 @@ class ShiftParser {
         endTime: end,
         jobTypeId: jobTypeId,
         tips: tips,
-        breakMinutes: breakMinutes,
         breakType: breakType,
       );
     } catch (e) {

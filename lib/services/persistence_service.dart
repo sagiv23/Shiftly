@@ -26,7 +26,7 @@ class PersistenceService {
     if (jobBox.isEmpty) {
       final defaultJobs = [
         JobType(id: '1', name: 'סדרן', hourlyRate: 40.22),
-        JobType(id: '2', name: 'מזנון', hourlyRate: 40.22),
+        JobType(id: '2', name: 'מזנון', hourlyRate: 37.20),
         JobType(id: '3', name: 'פריקה', hourlyRate: 40.22),
       ];
       for (var job in defaultJobs) {
