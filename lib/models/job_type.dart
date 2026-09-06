@@ -15,6 +15,18 @@ class JobType extends HiveObject {
 
   JobType({required this.id, required this.name, this.hourlyRate = 40.22});
 
+  JobType copyWith({
+    String? id,
+    String? name,
+    double? hourlyRate,
+  }) {
+    return JobType(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      hourlyRate: hourlyRate ?? this.hourlyRate,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,

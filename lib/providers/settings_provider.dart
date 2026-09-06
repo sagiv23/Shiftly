@@ -10,21 +10,31 @@ class SettingsProvider with ChangeNotifier {
   }
 
   ThemeMode _themeMode = ThemeMode.system;
-  double _breakThresholdHours = 9.0;
-  double _breakDurationMinutes = 45.0;
+  double _paidBreakDurationMinutes = 20.0;
+  double _unpaidBreakDurationMinutes = 45.0;
+  bool _hasCompletedOnboarding = false;
 
   ThemeMode get themeMode => _themeMode;
-
-  double get breakThresholdHours => _breakThresholdHours;
-
-  double get breakDurationMinutes => _breakDurationMinutes;
+  double get paidBreakDurationMinutes => _paidBreakDurationMinutes;
+  double get unpaidBreakDurationMinutes => _unpaidBreakDurationMinutes;
+  bool get hasCompletedOnboarding => _hasCompletedOnboarding;
 
   void _loadSettings() {
     final box = _persistence.settingsBox;
     _themeMode = ThemeMode
         .values[box.get('themeMode', defaultValue: ThemeMode.system.index)];
-    _breakThresholdHours = box.get('breakThresholdHours', defaultValue: 9.0);
-    _breakDurationMinutes = box.get('breakDurationMinutes', defaultValue: 45.0);
+    _paidBreakDurationMinutes = box.get(
+      'paidBreakDurationMinutes',
+      defaultValue: 20.0,
+    );
+    _unpaidBreakDurationMinutes = box.get(
+      'unpaidBreakDurationMinutes',
+      defaultValue: 45.0,
+    );
+    _hasCompletedOnboarding = box.get(
+      'hasCompletedOnboarding',
+      defaultValue: false,
+    );
     notifyListeners();
   }
 
@@ -34,11 +44,17 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setBreakRules(double threshold, double duration) async {
-    _breakThresholdHours = threshold;
-    _breakDurationMinutes = duration;
-    await _persistence.settingsBox.put('breakThresholdHours', threshold);
-    await _persistence.settingsBox.put('breakDurationMinutes', duration);
+  Future<void> setBreakDurations(double paid, double unpaid) async {
+    _paidBreakDurationMinutes = paid;
+    _unpaidBreakDurationMinutes = unpaid;
+    await _persistence.settingsBox.put('paidBreakDurationMinutes', paid);
+    await _persistence.settingsBox.put('unpaidBreakDurationMinutes', unpaid);
+    notifyListeners();
+  }
+
+  Future<void> completeOnboarding() async {
+    _hasCompletedOnboarding = true;
+    await _persistence.settingsBox.put('hasCompletedOnboarding', true);
     notifyListeners();
   }
 }

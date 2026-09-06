@@ -7,7 +7,7 @@ enum BreakType {
   @HiveField(0)
   none,
   @HiveField(1)
-  twentyMinPaid,
+  paid,
   @HiveField(2)
-  fortyFiveMinUnpaid,
+  unpaid,
 }

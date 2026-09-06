@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../models/break_type.dart';
 import '../models/job_type.dart';
 import '../models/shift.dart';
+import '../providers/settings_provider.dart';
 import '../providers/shift_provider.dart';
 import '../services/shift_parser.dart';
 
@@ -57,6 +58,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       _selectedBreakType = BreakType.none;
 
       final jobs = context.read<ShiftProvider>().jobTypes;
+      final settings = context.read<SettingsProvider>();
+
       if (jobs.isNotEmpty) {
         // Find 'מזנון' as default
         final miznon = jobs.firstWhere(
@@ -91,6 +94,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     }
 
     final dateStr = DateFormat('dd/MM/yyyy').format(_selectedDate);
+    final settings = context.read<SettingsProvider>();
 
     if (widget.shiftToEdit != null) {
       final s = widget.shiftToEdit!;
@@ -100,6 +104,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.jobTypeId = _selectedJobTypeId!;
       s.tips = double.tryParse(_tipsController.text) ?? 0;
       s.breakType = _selectedBreakType;
+      s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
       context.read<ShiftProvider>().updateShift(s);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,6 +122,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         jobTypeId: _selectedJobTypeId!,
         tips: double.tryParse(_tipsController.text) ?? 0,
         breakType: _selectedBreakType,
+        unpaidBreakMinutes: settings.unpaidBreakDurationMinutes,
       );
       context.read<ShiftProvider>().addShift(shift);
 
@@ -132,6 +138,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
   void _saveRaw() {
     if (_selectedJobTypeId == null) return;
+    final settings = context.read<SettingsProvider>();
 
     final lines = _rawTextController.text.split('\n');
     int addedCount = 0;
@@ -139,7 +146,12 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     for (var line in lines) {
       if (line.trim().isEmpty) continue;
 
-      final shift = ShiftParser.parse(line, _selectedJobTypeId!);
+      final shift = ShiftParser.parse(
+        line,
+        _selectedJobTypeId!,
+        paidMinutes: settings.paidBreakDurationMinutes,
+        unpaidMinutes: settings.unpaidBreakDurationMinutes,
+      );
       if (shift != null) {
         context.read<ShiftProvider>().addShift(shift);
         addedCount++;
@@ -160,6 +172,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   @override
   Widget build(BuildContext context) {
     final rawJobs = context.watch<ShiftProvider>().jobTypes;
+    final settings = context.watch<SettingsProvider>();
+
     // Sort jobs so 'מזנון' is always above 'סדרן'
     final jobs = List<JobType>.from(rawJobs)
       ..sort((a, b) {
@@ -289,15 +303,19 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           SizedBox(
             width: double.infinity,
             child: SegmentedButton<BreakType>(
-              segments: const [
-                ButtonSegment(value: BreakType.none, label: Text('ללא')),
+              segments: [
+                const ButtonSegment(value: BreakType.none, label: Text('ללא')),
                 ButtonSegment(
-                  value: BreakType.twentyMinPaid,
-                  label: Text('20 דק\' (בתשלום)'),
+                  value: BreakType.paid,
+                  label: Text(
+                    '${context.read<SettingsProvider>().paidBreakDurationMinutes.toStringAsFixed(0)} דק\' (בתשלום)',
+                  ),
                 ),
                 ButtonSegment(
-                  value: BreakType.fortyFiveMinUnpaid,
-                  label: Text('45 דק\' (לא בתשלום)'),
+                  value: BreakType.unpaid,
+                  label: Text(
+                    '${context.read<SettingsProvider>().unpaidBreakDurationMinutes.toStringAsFixed(0)} דק\' (לא בתשלום)',
+                  ),
                 ),
               ],
               selected: {_selectedBreakType},

@@ -24,13 +24,14 @@ class ShiftAdapter extends TypeAdapter<Shift> {
       jobTypeId: fields[4] as String,
       tips: fields[5] as double,
       breakType: fields[7] as BreakType?,
+      unpaidBreakMinutes: fields[8] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Shift obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class ShiftAdapter extends TypeAdapter<Shift> {
       ..writeByte(5)
       ..write(obj.tips)
       ..writeByte(7)
-      ..write(obj.breakType);
+      ..write(obj.breakType)
+      ..writeByte(8)
+      ..write(obj.unpaidBreakMinutes);
   }
 
   @override

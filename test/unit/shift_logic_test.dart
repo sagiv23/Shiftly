@@ -43,7 +43,7 @@ void main() {
         startTime: start,
         endTime: end,
         jobTypeId: 'j1',
-        breakType: BreakType.fortyFiveMinUnpaid,
+        breakType: BreakType.unpaid,
       );
 
       expect(shift.durationHours, 10.0);

@@ -3,14 +3,14 @@ name: Multi-Platform Release
 on:
   push:
     tags:
-      - 'v*' # Triggers on tags like v1.0.0
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  build-android-web-windows:
-    name: Build Android, Web & Windows
+  build-windows-android-web:
+    name: Build Windows, Android & Web
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,18 +34,18 @@ jobs:
       - name: Build Web
         run: flutter build web --release
 
+      - name: Build Windows
+        run: flutter build windows --release
+
       - name: Archive Web
         shell: pwsh
         run: Compress-Archive -Path build/web/* -DestinationPath build/web-release.zip
-
-      - name: Build Windows
-        run: flutter build windows --release
 
       - name: Archive Windows
         shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows-release.zip
 
-      - name: Prepare Assets for Upload
+      - name: Prepare Assets
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path staging -Force
@@ -56,11 +56,11 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: all-assets
+          name: assets-windows-android-web
           path: staging/*
 
-  build-ios:
-    name: Build iOS
+  build-macos-ios:
+    name: Build macOS & iOS
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,30 +68,76 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
       - name: Install dependencies
         run: flutter pub get
+
       - name: Run build_runner
         run: flutter pub run build_runner build --delete-conflicting-outputs
-      
-      # Build for simulator/testing without signing
+
+      - name: Build macOS
+        run: flutter build macos --release
+
+      - name: Archive macOS
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r ../../../../Shiftly-macOS.zip Shiftly.app
+
       - name: Build iOS (No Sign)
         run: flutter build ios --release --no-codesign
 
-      - name: Create Payload folder
+      - name: Create iOS Payload
         run: |
           mkdir Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
           zip -r Shiftly-iOS.ipa Payload
 
-      - name: Upload iOS Artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ios-ipa
-          path: Shiftly-iOS.ipa
+          name: assets-macos-ios
+          path: |
+            Shiftly-macOS.zip
+            Shiftly-iOS.ipa
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Archive Linux
+        run: |
+          cd build/linux/x64/release/bundle
+          zip -r ../../../../../Shiftly-Linux.zip *
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: assets-linux
+          path: Shiftly-Linux.zip
 
   create-release:
     name: Create GitHub Release
-    needs: [ build-android-web-windows, build-ios ]
+    needs: [ build-windows-android-web, build-macos-ios, build-linux ]
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
@@ -99,9 +145,6 @@ jobs:
         with:
           path: release-assets
           merge-multiple: true
-
-      - name: List files
-        run: ls -R release-assets
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -111,5 +154,7 @@ jobs:
             release-assets/web-release.zip
             release-assets/windows-release.zip
             release-assets/Shiftly-iOS.ipa
+            release-assets/Shiftly-macOS.zip
+            release-assets/Shiftly-Linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -365,14 +365,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
-  jni:
-    dependency: "direct overridden"
-    description:
-      name: jni
-      sha256: "6f8e04339f96cb32879acb181c60b2c1e2310ff86f3c62bcd1afcfb4b28b665d"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.9.2"
   js:
     dependency: transitive
     description:
@@ -502,13 +494,13 @@ packages:
     source: hosted
     version: "2.1.6"
   path_provider_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: path_provider_android
-      sha256: "149441ca6e4f38193b2e004c0ca6376a3d11f51fa5a77552d8bd4d2b0c0912ba"
+      sha256: "9c96da072b421e98183f9ea7464898428e764bc0ce5567f27ec8693442e72514"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.23"
+    version: "2.2.5"
   path_provider_foundation:
     dependency: transitive
     description:

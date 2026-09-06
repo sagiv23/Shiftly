@@ -8,15 +8,20 @@ class ShiftParser {
 
   /// Parses strings like:
   /// "24.6.2026 - 17:00 - 23:00 ללא + 50"
-  /// "24.6 - 17:00 - 23:00 45 + 50"
-  static Shift? parse(String input, String jobTypeId) {
+  /// "24.6 - 17:00 - 23:00 45 דקות + 50"
+  static Shift? parse(
+    String input,
+    String jobTypeId, {
+    double paidMinutes = 20.0,
+    double unpaidMinutes = 45.0,
+  }) {
     try {
       input = input.trim();
 
       // Updated Regex to include optional break description before the '+'
-      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [Break Description] [+ tips]
+      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [Break Description] [+ tips [text]]
       final regex = RegExp(
-        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(.*?)(?:\s*\+\s*(\d+))?\s*$',
+        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(.*?)(?:\s*\+\s*(\d+))?.*$',
         caseSensitive: false,
       );
 
@@ -66,13 +71,31 @@ class ShiftParser {
 
       // Determine BreakType from text
       BreakType breakType = BreakType.none;
+      double currentUnpaidMins = unpaidMinutes;
 
-      if (breakStr.contains('45 דקות')) {
-        breakType = BreakType.fortyFiveMinUnpaid;
-      } else if (breakStr.contains('20 דקות')) {
-        breakType = BreakType.twentyMinPaid;
-      } else if (breakStr.contains('ללא')) {
+      if (breakStr.contains('ללא')) {
         breakType = BreakType.none;
+      } else if (breakStr.contains('${paidMinutes.toStringAsFixed(0)} דקות') ||
+          breakStr.contains('${paidMinutes.toStringAsFixed(0)} דק')) {
+        breakType = BreakType.paid;
+      } else if (breakStr.contains(
+            '${unpaidMinutes.toStringAsFixed(0)} דקות',
+          ) ||
+          breakStr.contains('${unpaidMinutes.toStringAsFixed(0)} דק')) {
+        breakType = BreakType.unpaid;
+      } else {
+        // Fallback: try to find any number followed by "דקות"
+        final numRegex = RegExp(r'(\d+)\s*דקות');
+        final numMatch = numRegex.firstMatch(breakStr);
+        if (numMatch != null) {
+          final val = double.parse(numMatch.group(1)!);
+          if (val == paidMinutes) {
+            breakType = BreakType.paid;
+          } else {
+            breakType = BreakType.unpaid;
+            currentUnpaidMins = val;
+          }
+        }
       }
 
       final tips = tipsStr != null ? double.tryParse(tipsStr) ?? 0.0 : 0.0;
@@ -85,6 +108,7 @@ class ShiftParser {
         jobTypeId: jobTypeId,
         tips: tips,
         breakType: breakType,
+        unpaidBreakMinutes: currentUnpaidMins,
       );
     } catch (e) {
       return null;

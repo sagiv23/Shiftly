@@ -37,7 +37,11 @@ class ShiftProvider with ChangeNotifier {
   }
 
   Future<void> updateJobType(JobType jobType) async {
-    await jobType.save();
+    if (jobType.isInBox) {
+      await jobType.save();
+    } else {
+      await _persistence.jobTypesBox.put(jobType.id, jobType);
+    }
     notifyListeners();
   }
 

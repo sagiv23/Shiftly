@@ -11,21 +11,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late TextEditingController _thresholdController;
-  late TextEditingController _durationController;
-
-  @override
-  void initState() {
-    super.initState();
-    final settings = context.read<SettingsProvider>();
-    _thresholdController = TextEditingController(
-      text: settings.breakThresholdHours.toString(),
-    );
-    _durationController = TextEditingController(
-      text: settings.breakDurationMinutes.toString(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
@@ -62,66 +47,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
             selected: {settings.themeMode},
             onSelectionChanged: (val) => settings.setThemeMode(val.first),
-          ),
-          const SizedBox(height: 40),
-          _buildSectionHeader('כללי הפסקה אוטומטיים'),
-          Text(
-            'המערכת תחסיר זמן הפסקה באופן אוטומטי אם משך המשמרת עולה על הסף שנקבע.',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _thresholdController,
-                    decoration: const InputDecoration(
-                      labelText: 'סף שעות להפסקה',
-                      prefixIcon: Icon(Icons.timer_outlined),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _durationController,
-                    decoration: const InputDecoration(
-                      labelText: 'זמן הפסקה להחסרה (דקות)',
-                      prefixIcon: Icon(Icons.coffee_outlined),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              final threshold =
-                  double.tryParse(_thresholdController.text) ?? 9.0;
-              final duration =
-                  double.tryParse(_durationController.text) ?? 45.0;
-              settings.setBreakRules(threshold, duration);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('ההגדרות נשמרו בהצלחה'),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.save_rounded),
-            label: const Text('שמור הגדרות'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              elevation: 0,
-            ),
           ),
         ],
       ),

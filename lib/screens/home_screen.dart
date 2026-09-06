@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/break_type.dart';
 import '../models/shift.dart';
+import '../providers/settings_provider.dart';
 import '../providers/shift_provider.dart';
 import 'add_shift_screen.dart';
 import 'job_types_screen.dart';
@@ -17,6 +18,19 @@ class HomeScreen extends StatelessWidget {
     final shiftProvider = context.watch<ShiftProvider>();
     final groupedShifts = shiftProvider.shiftsGroupedByMonth;
 
+    // Calculate Grand Totals
+    double grandTotalNetHours = 0;
+    double grandTotalBaseSalary = 0;
+    double grandTotalTips = 0;
+
+    for (var shift in shiftProvider.shifts) {
+      final job = shiftProvider.getJobTypeById(shift.jobTypeId);
+      final rate = job?.hourlyRate ?? 40.22;
+      grandTotalNetHours += shift.netHours;
+      grandTotalBaseSalary += shift.netHours * rate;
+      grandTotalTips += shift.tips;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -26,10 +40,10 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.work_outline_rounded),
-            tooltip: 'סוגי עבודות',
+            tooltip: 'הגדרות עבודה',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const JobTypesScreen()),
+              MaterialPageRoute(builder: (_) => const WorkConfigScreen()),
             ),
           ),
           IconButton(
@@ -63,15 +77,22 @@ class HomeScreen extends StatelessWidget {
             )
           : ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              itemCount: groupedShifts.length,
+              itemCount: groupedShifts.length + 1,
               itemBuilder: (context, index) {
-                final monthKey = groupedShifts.keys.elementAt(index);
+                if (index == 0) {
+                  return _GrandTotalCard(
+                    totalHours: grandTotalNetHours,
+                    totalBase: grandTotalBaseSalary,
+                    totalTips: grandTotalTips,
+                  );
+                }
+                final monthKey = groupedShifts.keys.elementAt(index - 1);
                 final shifts = groupedShifts[monthKey]!;
                 // Keep the latest month expanded by default
                 return _MonthExpansionSection(
                   monthKey: monthKey,
                   shifts: shifts,
-                  initiallyExpanded: index == 0,
+                  initiallyExpanded: index == 1,
                 );
               },
             ),
@@ -103,6 +124,136 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _GrandTotalCard extends StatelessWidget {
+  final double totalHours;
+  final double totalBase;
+  final double totalTips;
+
+  const _GrandTotalCard({
+    required this.totalHours,
+    required this.totalBase,
+    required this.totalTips,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24, top: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.secondary,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Text(
+              'סה"כ הצטבר (כללי)',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "₪${(totalBase + totalTips).toStringAsFixed(2)}",
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _HeaderInfoItem(
+                    label: 'שעות',
+                    value: totalHours.toStringAsFixed(2),
+                  ),
+                  _VerticalDivider(),
+                  _HeaderInfoItem(
+                    label: 'שכר בסיס',
+                    value: "₪${totalBase.toStringAsFixed(2)}",
+                  ),
+                  _VerticalDivider(),
+                  _HeaderInfoItem(
+                    label: 'טיפים',
+                    value: "₪${totalTips.toStringAsFixed(2)}",
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderInfoItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _HeaderInfoItem({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VerticalDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 24,
+      width: 1,
+      color: Colors.white.withOpacity(0.2),
     );
   }
 }
@@ -168,7 +319,7 @@ class _MonthExpansionSection extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            "₪${(totalBaseSalary + totalTips).toStringAsFixed(2)} סה\"כ | ${totalNetHours.toStringAsFixed(1)} שעות",
+            "₪${(totalBaseSalary + totalTips).toStringAsFixed(2)} סה\"כ | ${totalNetHours.toStringAsFixed(2)} שעות",
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -254,15 +405,18 @@ class _ShiftTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
+    final settings = context.watch<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
     final rate = job?.hourlyRate ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
 
     String breakInfo = "";
-    if (shift.breakType == BreakType.twentyMinPaid) {
-      breakInfo = " (20 דק' בתשלום)";
-    } else if (shift.breakType == BreakType.fortyFiveMinUnpaid) {
-      breakInfo = " (45 דק' ללא תשלום)";
+    if ((shift.breakType ?? BreakType.none) == BreakType.paid) {
+      breakInfo =
+          " (${settings.paidBreakDurationMinutes.toStringAsFixed(0)} דק' בתשלום)";
+    } else if ((shift.breakType ?? BreakType.none) == BreakType.unpaid) {
+      breakInfo =
+          " (${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)} דק' ללא תשלום)";
     }
 
     return Dismissible(
@@ -350,7 +504,7 @@ class _ShiftTile extends StatelessWidget {
           ),
           subtitle: Text(
             "${DateFormat.Hm().format(shift.startTime)} - ${DateFormat.Hm().format(shift.endTime)} | "
-            "${shift.netHours.toStringAsFixed(1)} ש'",
+            "${shift.netHours.toStringAsFixed(2)} ש'",
             style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
           ),
           trailing: Column(

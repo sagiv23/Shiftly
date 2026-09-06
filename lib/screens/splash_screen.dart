@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/settings_provider.dart';
 import '../widgets/app_icon.dart';
 import 'home_screen.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,11 +50,16 @@ class _SplashScreenState extends State<SplashScreen>
   _navigateToHome() async {
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
+
+    final settings = context.read<SettingsProvider>();
+    final Widget nextScreen = settings.hasCompletedOnboarding
+        ? const HomeScreen()
+        : const OnboardingScreen();
+
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomeScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

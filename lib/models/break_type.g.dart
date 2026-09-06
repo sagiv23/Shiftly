@@ -16,9 +16,9 @@ class BreakTypeAdapter extends TypeAdapter<BreakType> {
       case 0:
         return BreakType.none;
       case 1:
-        return BreakType.twentyMinPaid;
+        return BreakType.paid;
       case 2:
-        return BreakType.fortyFiveMinUnpaid;
+        return BreakType.unpaid;
       default:
         return BreakType.none;
     }
@@ -30,10 +30,10 @@ class BreakTypeAdapter extends TypeAdapter<BreakType> {
       case BreakType.none:
         writer.writeByte(0);
         break;
-      case BreakType.twentyMinPaid:
+      case BreakType.paid:
         writer.writeByte(1);
         break;
-      case BreakType.fortyFiveMinUnpaid:
+      case BreakType.unpaid:
         writer.writeByte(2);
         break;
     }
