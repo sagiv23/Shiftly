@@ -45,19 +45,19 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.calendar_month_rounded),
+          tooltip: 'לוח שנה',
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CalendarScreen()),
+          ),
+        ),
         title: const Text(
           'Shiftly',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month_rounded),
-            tooltip: 'לוח שנה',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CalendarScreen()),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.work_outline_rounded),
             tooltip: 'הגדרות עבודה',
@@ -79,7 +79,8 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          if (timerProvider.startTime != null) _ActiveTimerBanner(timer: timerProvider),
+          if (timerProvider.startTime != null)
+            _ActiveTimerBanner(timer: timerProvider),
           Expanded(
             child: groupedShifts.isEmpty
                 ? Center(

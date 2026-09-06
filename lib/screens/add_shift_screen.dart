@@ -63,13 +63,16 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       if (isFromTimerReview) {
         _selectedDate = timer.startTime!;
         _startTime = TimeOfDay.fromDateTime(timer.startTime!);
-        _endTime =
-            TimeOfDay.fromDateTime(timer.reviewEndTime ?? DateTime.now());
+        _endTime = TimeOfDay.fromDateTime(
+          timer.reviewEndTime ?? DateTime.now(),
+        );
         _selectedJobTypeId = timer.jobTypeId;
-        _tipsController =
-            TextEditingController(text: timer.tips.toStringAsFixed(0));
-        _selectedBreakType =
-            timer.accumulatedBreakMinutes > 0 ? BreakType.unpaid : BreakType.none;
+        _tipsController = TextEditingController(
+          text: timer.tips.toStringAsFixed(0),
+        );
+        _selectedBreakType = timer.accumulatedUnpaidMinutes > 0
+            ? BreakType.unpaid
+            : BreakType.none;
         _timerTipsController.text = timer.tips.toStringAsFixed(0);
       } else {
         _selectedDate = DateTime.now();
@@ -115,10 +118,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       endTime: end,
       jobTypeId: timerProvider.jobTypeId!,
       tips: timerProvider.tips,
-      breakType: timerProvider.accumulatedBreakMinutes > 0
+      breakType: timerProvider.accumulatedUnpaidMinutes > 0
           ? BreakType.unpaid
           : BreakType.none,
-      unpaidBreakMinutes: timerProvider.accumulatedBreakMinutes,
+      unpaidBreakMinutes: timerProvider.accumulatedUnpaidMinutes,
     );
 
     shiftProvider.addShift(shift);
@@ -329,7 +332,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 _timerTipsController.text = '0';
               } else {
                 if (isOnBreak) {
-                  timerProvider.toggleBreak();
+                  timerProvider.endBreak();
                 } else {
                   _showFinishDialog();
                 }
@@ -343,22 +346,26 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 color: isReviewMode
                     ? Colors.green.shade500
                     : (isRunning
-                        ? (isOnBreak
-                            ? Colors.orange.shade400
-                            : Theme.of(context).colorScheme.primary)
-                        : Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)),
+                          ? (isOnBreak
+                                ? Colors.orange.shade400
+                                : Theme.of(context).colorScheme.primary)
+                          : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
-                    color: (isReviewMode
-                            ? Colors.green
-                            : (isRunning
-                                ? (isOnBreak
-                                    ? Colors.orange
-                                    : Theme.of(context).colorScheme.primary)
-                                : Colors.grey))
-                        .withValues(alpha: 0.3),
+                    color:
+                        (isReviewMode
+                                ? Colors.green
+                                : (isRunning
+                                      ? (isOnBreak
+                                            ? Colors.orange
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.primary)
+                                      : Colors.grey))
+                            .withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -376,10 +383,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                       isReviewMode
                           ? Icons.play_arrow_rounded
                           : (isRunning
-                              ? (isOnBreak
-                                  ? Icons.play_arrow_rounded
-                                  : Icons.stop_rounded)
-                              : Icons.play_arrow_rounded),
+                                ? (isOnBreak
+                                      ? Icons.play_arrow_rounded
+                                      : Icons.stop_rounded)
+                                : Icons.play_arrow_rounded),
                       size: 64,
                       color: isReviewMode || isRunning
                           ? Colors.white
@@ -390,8 +397,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                       isReviewMode
                           ? 'המשך משמרת'
                           : (isRunning
-                              ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
-                              : 'התחל משמרת'),
+                                ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
+                                : 'התחל משמרת'),
                       style: TextStyle(
                         color: isReviewMode || isRunning
                             ? Colors.white
@@ -426,22 +433,31 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             ),
           ),
           const SizedBox(height: 16),
-          if (isOnBreak || timerProvider.accumulatedBreakMinutes > 0)
+          if (isOnBreak || timerProvider.accumulatedUnpaidMinutes > 0)
             Column(
               children: [
+                if (isOnBreak)
+                  Text(
+                    'ספירה לאחור: ${timerProvider.breakRemaining.inMinutes}:${(timerProvider.breakRemaining.inSeconds % 60).toString().padLeft(2, '0')}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: timerProvider.activeBreakType == BreakType.paid
+                          ? Colors.blue
+                          : Colors.orange.shade700,
+                    ),
+                  ),
                 Text(
                   isOnBreak
-                      ? 'בהפסקה ללא תשלום: ${formatDuration(timerProvider.currentBreakElapsed)}'
-                      : 'סה"כ הפסקה (לא בתשלום): ${timerProvider.accumulatedBreakMinutes.toStringAsFixed(1)} דק\'',
+                      ? (timerProvider.activeBreakType == BreakType.paid
+                            ? 'בהפסקה בתשלום...'
+                            : 'בהפסקה ללא תשלום (השעון עצר)')
+                      : 'סה"כ הפסקה (לא בתשלום): ${timerProvider.accumulatedUnpaidMinutes.toStringAsFixed(1)} דק\'',
                   style: TextStyle(
                     color: Colors.orange.shade700,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
-                ),
-                const Text(
-                  'הפסקה בטיימר מנוכה מזמן העבודה הכולל',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -505,13 +521,60 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 if (!isReviewMode)
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => timerProvider.toggleBreak(),
+                      onPressed: () {
+                        final settings = context.read<SettingsProvider>();
+                        timerProvider.toggleBreak(
+                          BreakType.paid,
+                          settings.paidBreakDurationMinutes,
+                        );
+                      },
                       icon: Icon(
-                        isOnBreak
+                        (isOnBreak &&
+                                timerProvider.activeBreakType == BreakType.paid)
                             ? Icons.play_arrow_rounded
-                            : Icons.pause_rounded,
+                            : Icons.timer_outlined,
                       ),
-                      label: Text(isOnBreak ? 'סיים הפסקה' : 'צא להפסקה'),
+                      label: Text(
+                        (isOnBreak &&
+                                timerProvider.activeBreakType == BreakType.paid)
+                            ? 'סיים הפסקה'
+                            : 'הפסקה בתשלום',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.blue),
+                        foregroundColor: Colors.blue,
+                        minimumSize: const Size.fromHeight(56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (!isReviewMode) const SizedBox(width: 8),
+                if (!isReviewMode)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final settings = context.read<SettingsProvider>();
+                        timerProvider.toggleBreak(
+                          BreakType.unpaid,
+                          settings.unpaidBreakDurationMinutes,
+                        );
+                      },
+                      icon: Icon(
+                        (isOnBreak &&
+                                timerProvider.activeBreakType ==
+                                    BreakType.unpaid)
+                            ? Icons.play_arrow_rounded
+                            : Icons.coffee_outlined,
+                      ),
+                      label: Text(
+                        (isOnBreak &&
+                                timerProvider.activeBreakType ==
+                                    BreakType.unpaid)
+                            ? 'סיים הפסקה'
+                            : 'הפסקה ללא תשלום',
+                      ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.orange.shade700),
                         foregroundColor: Colors.orange.shade700,
@@ -522,26 +585,29 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                       ),
                     ),
                   ),
-                if (!isReviewMode) const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        isReviewMode ? _finishTimerShift : _showFinishDialog,
-                    icon: Icon(
-                        isReviewMode ? Icons.check_rounded : Icons.stop_rounded),
-                    label: Text(isReviewMode ? 'שמור וסיים' : 'סיום'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isReviewMode ? Colors.green : Colors.blue.shade600,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
+              ],
+            ),
+          const SizedBox(height: 16),
+          if (isRunning || isReviewMode)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: isReviewMode ? _finishTimerShift : _showFinishDialog,
+                icon: Icon(
+                  isReviewMode ? Icons.check_rounded : Icons.stop_rounded,
+                ),
+                label: Text(isReviewMode ? 'שמור וסיים' : 'סיום משמרת'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isReviewMode
+                      ? Colors.green
+                      : Colors.blue.shade600,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-              ],
+              ),
             ),
           if (isRunning || isReviewMode)
             TextButton(
@@ -585,7 +651,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   void _showFinishDialog() {
     // Stop the timer immediately when showing the dialog to allow review
     context.read<TimerProvider>().stopShift();
-    
+
     showDialog(
       context: context,
       barrierDismissible: false, // Force choice

@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../main.dart';
@@ -27,20 +28,21 @@ class NotificationService {
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     const LinuxInitializationSettings initializationSettingsLinux =
         LinuxInitializationSettings(defaultActionName: 'Open');
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-      macOS: initializationSettingsDarwin,
-      linux: initializationSettingsLinux,
-    );
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsDarwin,
+          macOS: initializationSettingsDarwin,
+          linux: initializationSettingsLinux,
+        );
 
     await _notificationsPlugin.initialize(
       initializationSettings,
@@ -68,7 +70,8 @@ class NotificationService {
     if (!kIsWeb && Platform.isAndroid) {
       final androidPlugin = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await androidPlugin?.requestNotificationsPermission();
     }
   }
@@ -82,39 +85,61 @@ class NotificationService {
   }) async {
     if (!_isSupported) return;
 
+    final List<AndroidNotificationAction> androidActions = [];
+    if (isOnBreak) {
+      androidActions.add(
+        const AndroidNotificationAction(
+          'end_break',
+          'חזור לעבודה',
+          showsUserInterface: true,
+        ),
+      );
+    } else {
+      androidActions.add(
+        const AndroidNotificationAction(
+          'start_paid_break',
+          'הפסקה בתשלום',
+          showsUserInterface: true,
+        ),
+      );
+      androidActions.add(
+        const AndroidNotificationAction(
+          'start_unpaid_break',
+          'הפסקה לא בתשלום',
+          showsUserInterface: true,
+        ),
+      );
+    }
+    androidActions.add(
+      const AndroidNotificationAction(
+        'stop_shift',
+        'סיום',
+        showsUserInterface: true,
+      ),
+    );
+
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'timer_channel',
-      'משמרת פעילה',
-      channelDescription: 'מציג את זמן המשמרת הנוכחית',
-      importance: Importance.low,
-      priority: Priority.low,
-      ongoing: true,
-      showWhen: true,
-      usesChronometer: !isOnBreak,
-      when: startTime.millisecondsSinceEpoch,
-      actions: <AndroidNotificationAction>[
-        AndroidNotificationAction(
-          'toggle_break',
-          isOnBreak ? 'חזור לעבודה' : 'צא להפסקה',
-          showsUserInterface: true,
-        ),
-        const AndroidNotificationAction(
-          'stop_shift',
-          'סיום',
-          showsUserInterface: true,
-        ),
-      ],
-    );
+          'timer_channel',
+          'משמרת פעילה',
+          channelDescription: 'מציג את זמן המשמרת הנוכחית',
+          importance: Importance.low,
+          priority: Priority.low,
+          ongoing: true,
+          showWhen: true,
+          usesChronometer: !isOnBreak,
+          when: startTime.millisecondsSinceEpoch,
+          actions: androidActions,
+        );
 
     const DarwinNotificationDetails darwinPlatformChannelSpecifics =
         DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    
-    const LinuxNotificationDetails linuxPlatformChannelSpecifics = 
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        );
+
+    const LinuxNotificationDetails linuxPlatformChannelSpecifics =
         LinuxNotificationDetails();
 
     final NotificationDetails platformChannelSpecifics = NotificationDetails(
