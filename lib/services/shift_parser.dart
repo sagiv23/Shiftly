@@ -18,10 +18,10 @@ class ShiftParser {
     try {
       input = input.trim();
 
-      // Updated Regex to include optional break description before the '+'
-      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [Break Description] [+ tips [text]]
+      // Refined Regex to correctly handle dates, times, optional break description (without +), and optional tips
+      // Format: DD.MM[.YYYY] - HH:mm - HH:mm [Break Description] [+ tips]
       final regex = RegExp(
-        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*(.*?)(?:\s*\+\s*(\d+))?.*$',
+        r'(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s*-\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})(?:\s+([^+]*))?(?:\s*\+\s*(\d+))?.*$',
         caseSensitive: false,
       );
 

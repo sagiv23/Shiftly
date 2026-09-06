@@ -7,11 +7,15 @@ import 'providers/settings_provider.dart';
 import 'providers/shift_provider.dart';
 import 'providers/timer_provider.dart';
 import 'screens/splash_screen.dart';
+import 'services/notification_service.dart';
 import 'services/persistence_service.dart';
 import 'theme/app_theme.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
   await initializeDateFormatting('he_IL', null);
 
   final persistenceService = PersistenceService();
@@ -44,6 +48,7 @@ class SalaryTrackerApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Shiftly',
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

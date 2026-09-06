@@ -23,7 +23,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          100,
+        ), // Added bottom padding
         children: [
           _buildSectionHeader('ערכת נושא'),
           const SizedBox(height: 12),

@@ -34,8 +34,8 @@ class HomeScreen extends StatelessWidget {
       grandTotalTips += shift.tips;
     }
 
-    // Include Active Timer in Grand Total
-    if (timerProvider.isRunning) {
+    // Include Active or Paused Timer in Grand Total
+    if (timerProvider.startTime != null) {
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.hourlyRate ?? 40.22;
       grandTotalNetHours += timerProvider.netMinutes / 60.0;
@@ -79,7 +79,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          if (timerProvider.isRunning) _ActiveTimerBanner(timer: timerProvider),
+          if (timerProvider.startTime != null) _ActiveTimerBanner(timer: timerProvider),
           Expanded(
             child: groupedShifts.isEmpty
                 ? Center(
@@ -100,10 +100,12 @@ class HomeScreen extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(
+                      16,
+                      8,
+                      16,
+                      100,
+                    ), // Added bottom padding to avoid FAB and system bars
                     itemCount: groupedShifts.length + 1,
                     itemBuilder: (context, index) {
                       if (index == 0) {
@@ -411,10 +413,9 @@ class _MonthExpansionSection extends StatelessWidget {
     final monthName = DateFormat.MMMM('he_IL').format(date);
     final year = date.year;
 
-    // Check if active timer belongs to this month
+    // Check if timer (active or paused) belongs to this month
     final timerProvider = context.watch<TimerProvider>();
-    if (timerProvider.isRunning &&
-        timerProvider.startTime != null &&
+    if (timerProvider.startTime != null &&
         timerProvider.startTime!.year == year &&
         timerProvider.startTime!.month == date.month) {
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
@@ -570,10 +571,14 @@ class _ShiftTile extends StatelessWidget {
       onDismissed: (_) {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         shiftProvider.deleteShift(shift.id);
-        ScaffoldMessenger.of(context).showSnackBar(
+
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.clearSnackBars();
+        messenger.showSnackBar(
           SnackBar(
             content: Text('משמרת מיום $dateStr נמחקה'),
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(milliseconds: 4500),
             action: SnackBarAction(
               label: 'ביטול',
               onPressed: () => shiftProvider.addShift(shift),

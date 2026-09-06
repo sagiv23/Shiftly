@@ -77,6 +77,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 focusedDay: _focusedDay,
                 calendarFormat: _calendarFormat,
                 startingDayOfWeek: StartingDayOfWeek.sunday,
+                weekendDays: const [DateTime.saturday],
                 rowHeight: 52,
                 daysOfWeekHeight: 40,
                 headerStyle: HeaderStyle(
@@ -99,22 +100,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 daysOfWeekStyle: DaysOfWeekStyle(
                   weekdayStyle: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
                     fontSize: 13,
                   ),
                   weekendStyle: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary, // Highlight Saturday
                     fontSize: 13,
                   ),
                   decoration: BoxDecoration(
                     color: Theme.of(
                       context,
-                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    ).colorScheme.primary.withValues(alpha: 0.05),
                   ),
                 ),
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: false,
+                  weekendTextStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                   selectedDecoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
@@ -201,7 +210,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.fromLTRB(
+                      8,
+                      0,
+                      8,
+                      100,
+                    ), // Added bottom padding
                     itemCount: selectedShifts.length,
                     itemBuilder: (context, index) {
                       return _CalendarShiftTile(shift: selectedShifts[index]);
@@ -252,10 +266,14 @@ class _CalendarShiftTile extends StatelessWidget {
       onDismissed: (_) {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         shiftProvider.deleteShift(shift.id);
-        ScaffoldMessenger.of(context).showSnackBar(
+
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.clearSnackBars();
+        messenger.showSnackBar(
           SnackBar(
             content: Text('משמרת מיום $dateStr נמחקה'),
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(milliseconds: 4500),
             action: SnackBarAction(
               label: 'ביטול',
               onPressed: () => shiftProvider.addShift(shift),

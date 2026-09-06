@@ -57,26 +57,41 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       _tipsController = TextEditingController(text: s.tips.toString());
       _selectedBreakType = s.breakType ?? BreakType.none;
     } else {
-      _selectedDate = DateTime.now();
-      _startTime = const TimeOfDay(hour: 9, minute: 0);
-      _endTime = const TimeOfDay(hour: 17, minute: 0);
-      _tipsController = TextEditingController(text: '0');
-      _selectedBreakType = BreakType.none;
+      final timer = context.read<TimerProvider>();
+      final isFromTimerReview = timer.startTime != null && !timer.isRunning;
 
-      final jobs = context.read<ShiftProvider>().jobTypes;
-      if (jobs.isNotEmpty) {
-        final miznon = jobs.firstWhere(
-          (j) => j.name.contains('מזנון'),
-          orElse: () => jobs.first,
-        );
-        _selectedJobTypeId = miznon.id;
-      }
+      if (isFromTimerReview) {
+        _selectedDate = timer.startTime!;
+        _startTime = TimeOfDay.fromDateTime(timer.startTime!);
+        _endTime =
+            TimeOfDay.fromDateTime(timer.reviewEndTime ?? DateTime.now());
+        _selectedJobTypeId = timer.jobTypeId;
+        _tipsController =
+            TextEditingController(text: timer.tips.toStringAsFixed(0));
+        _selectedBreakType =
+            timer.accumulatedBreakMinutes > 0 ? BreakType.unpaid : BreakType.none;
+        _timerTipsController.text = timer.tips.toStringAsFixed(0);
+      } else {
+        _selectedDate = DateTime.now();
+        _startTime = const TimeOfDay(hour: 9, minute: 0);
+        _endTime = const TimeOfDay(hour: 17, minute: 0);
+        _tipsController = TextEditingController(text: '0');
+        _selectedBreakType = BreakType.none;
 
-      // Initialize timer tab values if timer is running
-      final timerProvider = context.read<TimerProvider>();
-      if (timerProvider.isRunning) {
-        _selectedJobTypeId = timerProvider.jobTypeId ?? _selectedJobTypeId;
-        _timerTipsController.text = timerProvider.tips.toStringAsFixed(0);
+        final jobs = context.read<ShiftProvider>().jobTypes;
+        if (jobs.isNotEmpty) {
+          final miznon = jobs.firstWhere(
+            (j) => j.name.contains('מזנון'),
+            orElse: () => jobs.first,
+          );
+          _selectedJobTypeId = miznon.id;
+        }
+
+        // Initialize timer tab values if timer is running
+        if (timer.isRunning) {
+          _selectedJobTypeId = timer.jobTypeId ?? _selectedJobTypeId;
+          _timerTipsController.text = timer.tips.toStringAsFixed(0);
+        }
       }
     }
   }
@@ -85,15 +100,19 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final timerProvider = context.read<TimerProvider>();
     final shiftProvider = context.read<ShiftProvider>();
 
-    if (timerProvider.startTime == null || timerProvider.jobTypeId == null)
+    if (timerProvider.startTime == null || timerProvider.jobTypeId == null) {
       return;
+    }
 
-    final now = DateTime.now();
+    final end = timerProvider.isRunning
+        ? DateTime.now()
+        : (timerProvider.reviewEndTime ?? DateTime.now());
+
     final shift = Shift(
       id: const Uuid().v4(),
       date: timerProvider.startTime!,
       startTime: timerProvider.startTime!,
-      endTime: now,
+      endTime: end,
       jobTypeId: timerProvider.jobTypeId!,
       tips: timerProvider.tips,
       breakType: timerProvider.accumulatedBreakMinutes > 0
@@ -105,10 +124,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     shiftProvider.addShift(shift);
     timerProvider.resetTimer();
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
       const SnackBar(
         content: Text('המשמרת נשמרה בהצלחה'),
         behavior: SnackBarBehavior.floating,
+        duration: Duration(milliseconds: 4500),
       ),
     );
     Navigator.pop(context);
@@ -150,10 +172,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
       context.read<ShiftProvider>().updateShift(s);
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
         SnackBar(
           content: Text('משמרת מיום $dateStr עודכנה בהצלחה'),
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(milliseconds: 4500),
         ),
       );
     } else {
@@ -169,10 +194,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       );
       context.read<ShiftProvider>().addShift(shift);
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
         SnackBar(
           content: Text('משמרת מיום $dateStr נשמרה בהצלחה'),
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(milliseconds: 4500),
         ),
       );
     }
@@ -204,9 +232,12 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     if (addedCount > 0) {
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
+      messenger.showSnackBar(
         const SnackBar(
-          content: Text('Could not parse any shifts. Check format.'),
+          content: Text('בדוק שוב האם הפורמט שהזנת תקין'),
+          duration: Duration(milliseconds: 4500),
         ),
       );
     }
@@ -260,6 +291,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final shiftProvider = context.watch<ShiftProvider>();
     final isRunning = timerProvider.isRunning;
     final isOnBreak = timerProvider.isOnBreak;
+    final isReviewMode = timerProvider.startTime != null && !isRunning;
     final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
 
     String formatDuration(Duration d) {
@@ -278,10 +310,18 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           // Big Circle Button
           GestureDetector(
             onTap: () {
-              if (!isRunning) {
+              if (isReviewMode) {
+                timerProvider.resumeShift();
+                _tabController.animateTo(0);
+              } else if (!isRunning) {
                 if (_selectedJobTypeId == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('בחר סוג עבודה קודם')),
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger.clearSnackBars();
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('בחר סוג עבודה קודם'),
+                      duration: Duration(milliseconds: 4500),
+                    ),
                   );
                   return;
                 }
@@ -300,22 +340,25 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               height: 220,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isRunning
-                    ? (isOnBreak
-                          ? Colors.orange.shade400
-                          : Theme.of(context).colorScheme.primary)
-                    : Theme.of(
-                        context,
-                      ).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                color: isReviewMode
+                    ? Colors.green.shade500
+                    : (isRunning
+                        ? (isOnBreak
+                            ? Colors.orange.shade400
+                            : Theme.of(context).colorScheme.primary)
+                        : Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        (isRunning
+                    color: (isReviewMode
+                            ? Colors.green
+                            : (isRunning
                                 ? (isOnBreak
-                                      ? Colors.orange
-                                      : Theme.of(context).colorScheme.primary)
-                                : Colors.grey)
-                            .withValues(alpha: 0.3),
+                                    ? Colors.orange
+                                    : Theme.of(context).colorScheme.primary)
+                                : Colors.grey))
+                        .withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -330,23 +373,27 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      isRunning
-                          ? (isOnBreak
-                                ? Icons.play_arrow_rounded
-                                : Icons.stop_rounded)
-                          : Icons.play_arrow_rounded,
+                      isReviewMode
+                          ? Icons.play_arrow_rounded
+                          : (isRunning
+                              ? (isOnBreak
+                                  ? Icons.play_arrow_rounded
+                                  : Icons.stop_rounded)
+                              : Icons.play_arrow_rounded),
                       size: 64,
-                      color: isRunning
+                      color: isReviewMode || isRunning
                           ? Colors.white
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      isRunning
-                          ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
-                          : 'התחל משמרת',
+                      isReviewMode
+                          ? 'המשך משמרת'
+                          : (isRunning
+                              ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
+                              : 'התחל משמרת'),
                       style: TextStyle(
-                        color: isRunning
+                        color: isReviewMode || isRunning
                             ? Colors.white
                             : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.bold,
@@ -407,7 +454,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               child: Column(
                 children: [
                   DropdownButtonFormField<String>(
-                    value: isRunning
+                    value: (isRunning || isReviewMode)
                         ? timerProvider.jobTypeId
                         : _selectedJobTypeId,
                     decoration: const InputDecoration(
@@ -424,7 +471,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                         .toList(),
                     onChanged: (val) {
                       if (val == null) return;
-                      if (isRunning) {
+                      if (isRunning || isReviewMode) {
                         timerProvider.setJobType(val);
                       } else {
                         setState(() => _selectedJobTypeId = val);
@@ -441,7 +488,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                     keyboardType: TextInputType.number,
                     onChanged: (val) {
                       final d = double.tryParse(val) ?? 0.0;
-                      if (isRunning) {
+                      if (isRunning || isReviewMode) {
                         timerProvider.setTips(d);
                       }
                     },
@@ -452,36 +499,40 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
           const SizedBox(height: 24),
           // Break/Finish Buttons
-          if (isRunning)
+          if (isRunning || isReviewMode)
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => timerProvider.toggleBreak(),
-                    icon: Icon(
-                      isOnBreak
-                          ? Icons.play_arrow_rounded
-                          : Icons.pause_rounded,
-                    ),
-                    label: Text(isOnBreak ? 'סיים הפסקה' : 'צא להפסקה'),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.orange.shade700),
-                      foregroundColor: Colors.orange.shade700,
-                      minimumSize: const Size.fromHeight(56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                if (!isReviewMode)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => timerProvider.toggleBreak(),
+                      icon: Icon(
+                        isOnBreak
+                            ? Icons.play_arrow_rounded
+                            : Icons.pause_rounded,
+                      ),
+                      label: Text(isOnBreak ? 'סיים הפסקה' : 'צא להפסקה'),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.orange.shade700),
+                        foregroundColor: Colors.orange.shade700,
+                        minimumSize: const Size.fromHeight(56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
+                if (!isReviewMode) const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _showFinishDialog,
-                    icon: const Icon(Icons.stop_rounded),
-                    label: const Text('סיום'),
+                    onPressed:
+                        isReviewMode ? _finishTimerShift : _showFinishDialog,
+                    icon: Icon(
+                        isReviewMode ? Icons.check_rounded : Icons.stop_rounded),
+                    label: Text(isReviewMode ? 'שמור וסיים' : 'סיום'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade600,
+                      backgroundColor:
+                          isReviewMode ? Colors.green : Colors.blue.shade600,
                       foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(56),
                       shape: RoundedRectangleBorder(
@@ -492,7 +543,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 ),
               ],
             ),
-          if (isRunning)
+          if (isRunning || isReviewMode)
             TextButton(
               onPressed: () {
                 showDialog(
@@ -532,24 +583,31 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   }
 
   void _showFinishDialog() {
+    // Stop the timer immediately when showing the dialog to allow review
+    context.read<TimerProvider>().stopShift();
+    
     showDialog(
       context: context,
+      barrierDismissible: false, // Force choice
       builder: (ctx) => AlertDialog(
         title: const Text('סיום משמרת'),
         content: const Text(
-          'האם אתה בטוח שברצונך לסיים את המשמרת ולשמור אותה?',
+          'הטיימר נעצר. האם ברצונך לשמור את המשמרת או להמשיך בעבודה?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('ביטול'),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<TimerProvider>().resumeShift();
+            },
+            child: const Text('המשך עבודה'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               _finishTimerShift();
             },
-            child: const Text('סיים ושמור'),
+            child: const Text('שמור וסיים'),
           ),
         ],
       ),
@@ -753,7 +811,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               border: Border.all(
                 color: Theme.of(
                   context,
-                ).colorScheme.onSecondaryContainer.withOpacity(0.1),
+                ).colorScheme.onSecondaryContainer.withValues(alpha: 0.1),
               ),
             ),
             child: Row(

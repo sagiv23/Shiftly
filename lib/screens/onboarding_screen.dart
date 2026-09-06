@@ -258,9 +258,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             Icons.delete_outline,
                             color: Colors.red,
                           ),
-                          onPressed: () => context
-                              .read<ShiftProvider>()
-                              .deleteJobType(job.id),
+                          onPressed: () {
+                            final provider = context.read<ShiftProvider>();
+                            final name = job.name;
+                            provider.deleteJobType(job.id);
+
+                            final messenger = ScaffoldMessenger.of(context);
+                            messenger.clearSnackBars();
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text('תפקיד "$name" נמחק'),
+                                duration: const Duration(milliseconds: 4500),
+                                behavior: SnackBarBehavior.floating,
+                                action: SnackBarAction(
+                                  label: 'ביטול',
+                                  onPressed: () => provider.addJobType(job),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -353,14 +369,49 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (nameController.text.isEmpty) return;
+              final name = nameController.text.trim();
               final rate = double.tryParse(rateController.text) ?? 0.0;
-              context.read<ShiftProvider>().addJobType(
-                JobType(
-                  id: const Uuid().v4(),
-                  name: nameController.text,
-                  hourlyRate: rate,
-                ),
+              final provider = context.read<ShiftProvider>();
+              final messenger = ScaffoldMessenger.of(context);
+
+              if (name.isEmpty) {
+                messenger.clearSnackBars();
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('נא להזין שם לתפקיד'),
+                    duration: Duration(milliseconds: 4500),
+                  ),
+                );
+                return;
+              }
+
+              final exists = provider.jobTypes.any(
+                (j) => j.name.toLowerCase() == name.toLowerCase(),
+              );
+
+              if (exists) {
+                messenger.clearSnackBars();
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('תפקיד בשם זה כבר קיים'),
+                    duration: Duration(milliseconds: 4500),
+                  ),
+                );
+                return;
+              }
+
+              if (rate < 0) {
+                messenger.clearSnackBars();
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('השכר לא יכול להיות שלילי'),
+                    duration: Duration(milliseconds: 4500),
+                  ),
+                );
+                return;
+              }
+              provider.addJobType(
+                JobType(id: const Uuid().v4(), name: name, hourlyRate: rate),
               );
               Navigator.pop(context);
             },
