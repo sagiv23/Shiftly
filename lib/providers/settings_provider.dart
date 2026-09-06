@@ -15,8 +15,11 @@ class SettingsProvider with ChangeNotifier {
   bool _hasCompletedOnboarding = false;
 
   ThemeMode get themeMode => _themeMode;
+
   double get paidBreakDurationMinutes => _paidBreakDurationMinutes;
+
   double get unpaidBreakDurationMinutes => _unpaidBreakDurationMinutes;
+
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
 
   void _loadSettings() {

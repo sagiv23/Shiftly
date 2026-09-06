@@ -8,12 +8,14 @@ import '../models/job_type.dart';
 import '../models/shift.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shift_provider.dart';
+import '../providers/timer_provider.dart';
 import '../services/shift_parser.dart';
 
 class AddShiftScreen extends StatefulWidget {
   final Shift? shiftToEdit;
+  final int initialTabIndex;
 
-  const AddShiftScreen({super.key, this.shiftToEdit});
+  const AddShiftScreen({super.key, this.shiftToEdit, this.initialTabIndex = 0});
 
   @override
   State<AddShiftScreen> createState() => _AddShiftScreenState();
@@ -34,12 +36,16 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   // Raw Paste State
   final TextEditingController _rawTextController = TextEditingController();
 
+  // Timer State
+  final TextEditingController _timerTipsController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: widget.shiftToEdit == null ? 2 : 1,
+      length: widget.shiftToEdit == null ? 3 : 1,
       vsync: this,
+      initialIndex: widget.shiftToEdit == null ? widget.initialTabIndex : 0,
     );
 
     if (widget.shiftToEdit != null) {
@@ -58,17 +64,54 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       _selectedBreakType = BreakType.none;
 
       final jobs = context.read<ShiftProvider>().jobTypes;
-      final settings = context.read<SettingsProvider>();
-
       if (jobs.isNotEmpty) {
-        // Find 'מזנון' as default
         final miznon = jobs.firstWhere(
           (j) => j.name.contains('מזנון'),
           orElse: () => jobs.first,
         );
         _selectedJobTypeId = miznon.id;
       }
+
+      // Initialize timer tab values if timer is running
+      final timerProvider = context.read<TimerProvider>();
+      if (timerProvider.isRunning) {
+        _selectedJobTypeId = timerProvider.jobTypeId ?? _selectedJobTypeId;
+        _timerTipsController.text = timerProvider.tips.toStringAsFixed(0);
+      }
     }
+  }
+
+  void _finishTimerShift() {
+    final timerProvider = context.read<TimerProvider>();
+    final shiftProvider = context.read<ShiftProvider>();
+
+    if (timerProvider.startTime == null || timerProvider.jobTypeId == null)
+      return;
+
+    final now = DateTime.now();
+    final shift = Shift(
+      id: const Uuid().v4(),
+      date: timerProvider.startTime!,
+      startTime: timerProvider.startTime!,
+      endTime: now,
+      jobTypeId: timerProvider.jobTypeId!,
+      tips: timerProvider.tips,
+      breakType: timerProvider.accumulatedBreakMinutes > 0
+          ? BreakType.unpaid
+          : BreakType.none,
+      unpaidBreakMinutes: timerProvider.accumulatedBreakMinutes,
+    );
+
+    shiftProvider.addShift(shift);
+    timerProvider.resetTimer();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('המשמרת נשמרה בהצלחה'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    Navigator.pop(context);
   }
 
   void _saveManual() {
@@ -172,7 +215,6 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   @override
   Widget build(BuildContext context) {
     final rawJobs = context.watch<ShiftProvider>().jobTypes;
-    final settings = context.watch<SettingsProvider>();
 
     // Sort jobs so 'מזנון' is always above 'סדרן'
     final jobs = List<JobType>.from(rawJobs)
@@ -194,8 +236,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             : TabBar(
                 controller: _tabController,
                 tabs: const [
-                  Tab(text: 'ידני'),
-                  Tab(text: 'הדבקה חופשית'),
+                  Tab(text: 'טיימר', icon: Icon(Icons.timer_outlined)),
+                  Tab(text: 'ידני', icon: Icon(Icons.edit_note_rounded)),
+                  Tab(text: 'הדבקה חופשית', icon: Icon(Icons.paste_rounded)),
                 ],
               ),
       ),
@@ -203,8 +246,313 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ? _buildManualForm(jobs)
           : TabBarView(
               controller: _tabController,
-              children: [_buildManualForm(jobs), _buildRawForm(jobs)],
+              children: [
+                _buildTimerForm(jobs),
+                _buildManualForm(jobs),
+                _buildRawForm(jobs),
+              ],
             ),
+    );
+  }
+
+  Widget _buildTimerForm(List<JobType> jobs) {
+    final timerProvider = context.watch<TimerProvider>();
+    final shiftProvider = context.watch<ShiftProvider>();
+    final isRunning = timerProvider.isRunning;
+    final isOnBreak = timerProvider.isOnBreak;
+    final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
+
+    String formatDuration(Duration d) {
+      String twoDigits(int n) => n.toString().padLeft(2, '0');
+      final hours = d.inHours;
+      final minutes = twoDigits(d.inMinutes.remainder(60));
+      final seconds = twoDigits(d.inSeconds.remainder(60));
+      return "$hours:$minutes:$seconds";
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          // Big Circle Button
+          GestureDetector(
+            onTap: () {
+              if (!isRunning) {
+                if (_selectedJobTypeId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('בחר סוג עבודה קודם')),
+                  );
+                  return;
+                }
+                timerProvider.startShift(_selectedJobTypeId!);
+                _timerTipsController.text = '0';
+              } else {
+                if (isOnBreak) {
+                  timerProvider.toggleBreak();
+                } else {
+                  _showFinishDialog();
+                }
+              }
+            },
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isRunning
+                    ? (isOnBreak
+                          ? Colors.orange.shade400
+                          : Theme.of(context).colorScheme.primary)
+                    : Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        (isRunning
+                                ? (isOnBreak
+                                      ? Colors.orange
+                                      : Theme.of(context).colorScheme.primary)
+                                : Colors.grey)
+                            .withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 8,
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isRunning
+                          ? (isOnBreak
+                                ? Icons.play_arrow_rounded
+                                : Icons.stop_rounded)
+                          : Icons.play_arrow_rounded,
+                      size: 64,
+                      color: isRunning
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isRunning
+                          ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
+                          : 'התחל משמרת',
+                      style: TextStyle(
+                        color: isRunning
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 40),
+          // Timer Display
+          Text(
+            formatDuration(timerProvider.elapsed),
+            style: const TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Live Pay Display
+          Text(
+            '₪${timerProvider.calculateLivePay(job?.hourlyRate ?? 40.22).toStringAsFixed(2)} נצבר',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (isOnBreak || timerProvider.accumulatedBreakMinutes > 0)
+            Column(
+              children: [
+                Text(
+                  isOnBreak
+                      ? 'בהפסקה ללא תשלום: ${formatDuration(timerProvider.currentBreakElapsed)}'
+                      : 'סה"כ הפסקה (לא בתשלום): ${timerProvider.accumulatedBreakMinutes.toStringAsFixed(1)} דק\'',
+                  style: TextStyle(
+                    color: Colors.orange.shade700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const Text(
+                  'הפסקה בטיימר מנוכה מזמן העבודה הכולל',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          const SizedBox(height: 40),
+
+          // Controls Card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: isRunning
+                        ? timerProvider.jobTypeId
+                        : _selectedJobTypeId,
+                    decoration: const InputDecoration(
+                      labelText: 'סוג עבודה',
+                      prefixIcon: Icon(Icons.work_rounded),
+                    ),
+                    items: jobs
+                        .map(
+                          (j) => DropdownMenuItem(
+                            value: j.id,
+                            child: Text(j.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) {
+                      if (val == null) return;
+                      if (isRunning) {
+                        timerProvider.setJobType(val);
+                      } else {
+                        setState(() => _selectedJobTypeId = val);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _timerTipsController,
+                    decoration: const InputDecoration(
+                      labelText: 'טיפים (₪)',
+                      prefixIcon: Icon(Icons.monetization_on_rounded),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) {
+                      final d = double.tryParse(val) ?? 0.0;
+                      if (isRunning) {
+                        timerProvider.setTips(d);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Break/Finish Buttons
+          if (isRunning)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => timerProvider.toggleBreak(),
+                    icon: Icon(
+                      isOnBreak
+                          ? Icons.play_arrow_rounded
+                          : Icons.pause_rounded,
+                    ),
+                    label: Text(isOnBreak ? 'סיים הפסקה' : 'צא להפסקה'),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.orange.shade700),
+                      foregroundColor: Colors.orange.shade700,
+                      minimumSize: const Size.fromHeight(56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _showFinishDialog,
+                    icon: const Icon(Icons.stop_rounded),
+                    label: const Text('סיום'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          if (isRunning)
+            TextButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('איפוס טיימר'),
+                    content: const Text(
+                      'האם אתה בטוח שברצונך לאפס את הטיימר? כל המידע הנוכחי יימחק.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('ביטול'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          timerProvider.resetTimer();
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text(
+                          'אפס',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              child: const Text(
+                'ביטול ואיפוס',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showFinishDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('סיום משמרת'),
+        content: const Text(
+          'האם אתה בטוח שברצונך לסיים את המשמרת ולשמור אותה?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('ביטול'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _finishTimerShift();
+            },
+            child: const Text('סיים ושמור'),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+
 import '../models/job_type.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shift_provider.dart';
@@ -139,7 +140,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 16),
           const Text(
             'כמה זמן נמשכת הפסקה בדרך כלל? (ניתן לשנות בכל משמרת)',
-            style: TextStyle(fontSize: 16, color: Colors.grey, fontFamily: 'Arial'),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+              fontFamily: 'Arial',
+            ),
           ),
           const SizedBox(height: 40),
           _buildDurationSlider(
@@ -169,8 +174,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Arial')),
-            Text('${value.toInt()} דק\'', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Arial',
+              ),
+            ),
+            Text(
+              '${value.toInt()} דק\'',
+              style: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
         Slider(
@@ -207,7 +224,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 8),
           const Text(
             'הגדר את התפקידים השונים שלך ואת השכר לשעה.',
-            style: TextStyle(fontSize: 16, color: Colors.grey, fontFamily: 'Arial'),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+              fontFamily: 'Arial',
+            ),
           ),
           const SizedBox(height: 24),
           Expanded(
@@ -218,8 +239,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    title: Text(job.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('₪${job.hourlyRate.toStringAsFixed(2)} לשעה'),
+                    title: Text(
+                      job.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '₪${job.hourlyRate.toStringAsFixed(2)} לשעה',
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -228,8 +254,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           onPressed: () => _editJobType(job),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
-                          onPressed: () => context.read<ShiftProvider>().deleteJobType(job.id),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
+                          onPressed: () => context
+                              .read<ShiftProvider>()
+                              .deleteJobType(job.id),
                         ),
                       ],
                     ),
@@ -250,7 +281,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _editJobType(JobType job) {
     final nameController = TextEditingController(text: job.name);
-    final rateController = TextEditingController(text: job.hourlyRate.toString());
+    final rateController = TextEditingController(
+      text: job.hourlyRate.toString(),
+    );
 
     showDialog(
       context: context,
@@ -271,10 +304,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('ביטול')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ביטול'),
+          ),
           ElevatedButton(
             onPressed: () {
-              final rate = double.tryParse(rateController.text) ?? job.hourlyRate;
+              final rate =
+                  double.tryParse(rateController.text) ?? job.hourlyRate;
               context.read<ShiftProvider>().updateJobType(
                 job.copyWith(name: nameController.text, hourlyRate: rate),
               );
@@ -310,7 +347,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('ביטול')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ביטול'),
+          ),
           ElevatedButton(
             onPressed: () {
               if (nameController.text.isEmpty) return;
@@ -346,7 +386,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 height: 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _currentPage == index ? Colors.blue : Colors.grey.shade300,
+                  color: _currentPage == index
+                      ? Colors.blue
+                      : Colors.grey.shade300,
                 ),
               ),
             ),
@@ -355,11 +397,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onPressed: _nextPage,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: Text(
               _currentPage == 2 ? 'בוא נתחיל!' : 'המשך',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Arial'),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Arial',
+              ),
             ),
           ),
         ],

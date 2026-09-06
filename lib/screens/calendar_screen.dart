@@ -37,11 +37,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final shiftProvider = context.watch<ShiftProvider>();
     final allShifts = shiftProvider.shifts;
-    final selectedShifts = _getShiftsForDay(_selectedDay ?? _focusedDay, allShifts);
+    final selectedShifts = _getShiftsForDay(
+      _selectedDay ?? _focusedDay,
+      allShifts,
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('לוח משמרות', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'לוח משמרות',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: Column(
         children: [
@@ -52,11 +58,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 color: Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -79,19 +87,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                  leftChevronIcon: Icon(Icons.chevron_left, color: Theme.of(context).colorScheme.primary),
-                  rightChevronIcon: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary),
+                  leftChevronIcon: Icon(
+                    Icons.chevron_left,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  rightChevronIcon: Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
                 daysOfWeekStyle: DaysOfWeekStyle(
                   weekdayStyle: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: Theme.of(context).colorScheme.primary,
                     fontSize: 13,
                   ),
                   weekendStyle: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: Theme.of(context).colorScheme.primary,
                     fontSize: 13,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
                   ),
                 ),
                 calendarStyle: CalendarStyle(
@@ -143,12 +162,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
             child: Row(
               children: [
-                const Icon(Icons.list_alt_rounded, size: 20, color: Colors.grey),
+                const Icon(
+                  Icons.list_alt_rounded,
+                  size: 20,
+                  color: Colors.grey,
+                ),
                 const SizedBox(width: 8),
                 Text(
-                  _selectedDay == null 
-                    ? 'בחר יום להצגת משמרות' 
-                    : 'משמרות ב-${DateFormat('dd/MM').format(_selectedDay!)}',
+                  _selectedDay == null
+                      ? 'בחר יום להצגת משמרות'
+                      : 'משמרות ב-${DateFormat('dd/MM').format(_selectedDay!)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -164,9 +187,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.event_busy_rounded, size: 48, color: Colors.grey.withOpacity(0.3)),
+                        Icon(
+                          Icons.event_busy_rounded,
+                          size: 48,
+                          color: Colors.grey.withValues(alpha: 0.3),
+                        ),
                         const SizedBox(height: 12),
-                        const Text('אין משמרות ביום זה', style: TextStyle(color: Colors.grey)),
+                        const Text(
+                          'אין משמרות ביום זה',
+                          style: TextStyle(color: Colors.grey),
+                        ),
                       ],
                     ),
                   )
@@ -199,9 +229,11 @@ class _CalendarShiftTile extends StatelessWidget {
 
     String breakInfo = "";
     if ((shift.breakType ?? BreakType.none) == BreakType.paid) {
-      breakInfo = " (${settings.paidBreakDurationMinutes.toStringAsFixed(0)} דק' בתשלום)";
+      breakInfo =
+          " (${settings.paidBreakDurationMinutes.toStringAsFixed(0)} דק' בתשלום)";
     } else if ((shift.breakType ?? BreakType.none) == BreakType.unpaid) {
-      breakInfo = " (${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)} דק' ללא תשלום)";
+      breakInfo =
+          " (${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)} דק' ללא תשלום)";
     }
 
     return Dismissible(
@@ -237,7 +269,9 @@ class _CalendarShiftTile extends StatelessWidget {
           color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
         child: ListTile(
@@ -253,10 +287,15 @@ class _CalendarShiftTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
+              color: Theme.of(
+                context,
+              ).colorScheme.primaryContainer.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.work_rounded, color: Theme.of(context).colorScheme.onPrimaryContainer),
+            child: Icon(
+              Icons.work_rounded,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
           ),
           title: Text(
             "${job?.name ?? 'לא ידוע'}$breakInfo",
@@ -281,14 +320,21 @@ class _CalendarShiftTile extends StatelessWidget {
               ),
               if (shift.tips > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     "+₪${shift.tips.toStringAsFixed(2)}",
-                    style: TextStyle(fontSize: 10, color: Colors.green.shade700, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
             ],

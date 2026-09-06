@@ -15,11 +15,7 @@ class JobType extends HiveObject {
 
   JobType({required this.id, required this.name, this.hourlyRate = 40.22});
 
-  JobType copyWith({
-    String? id,
-    String? name,
-    double? hourlyRate,
-  }) {
+  JobType copyWith({String? id, String? name, double? hourlyRate}) {
     return JobType(
       id: id ?? this.id,
       name: name ?? this.name,

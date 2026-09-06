@@ -6,6 +6,7 @@ import '../models/break_type.dart';
 import '../models/shift.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shift_provider.dart';
+import '../providers/timer_provider.dart';
 import 'add_shift_screen.dart';
 import 'calendar_screen.dart';
 import 'job_types_screen.dart';
@@ -17,6 +18,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.watch<ShiftProvider>();
+    final timerProvider = context.watch<TimerProvider>();
     final groupedShifts = shiftProvider.shiftsGroupedByMonth;
 
     // Calculate Grand Totals
@@ -30,6 +32,15 @@ class HomeScreen extends StatelessWidget {
       grandTotalNetHours += shift.netHours;
       grandTotalBaseSalary += shift.netHours * rate;
       grandTotalTips += shift.tips;
+    }
+
+    // Include Active Timer in Grand Total
+    if (timerProvider.isRunning) {
+      final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
+      final rate = job?.hourlyRate ?? 40.22;
+      grandTotalNetHours += timerProvider.netMinutes / 60.0;
+      grandTotalBaseSalary += (timerProvider.netMinutes / 60.0) * rate;
+      grandTotalTips += timerProvider.tips;
     }
 
     return Scaffold(
@@ -66,45 +77,55 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: groupedShifts.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.history_rounded,
-                    size: 64,
-                    color: Colors.grey.withOpacity(0.5),
+      body: Column(
+        children: [
+          if (timerProvider.isRunning) _ActiveTimerBanner(timer: timerProvider),
+          Expanded(
+            child: groupedShifts.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.history_rounded,
+                          size: 64,
+                          color: Colors.grey.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'עדיין לא נרשמו משמרות.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
+                    ),
+                    itemCount: groupedShifts.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _GrandTotalCard(
+                          totalHours: grandTotalNetHours,
+                          totalBase: grandTotalBaseSalary,
+                          totalTips: grandTotalTips,
+                        );
+                      }
+                      final monthKey = groupedShifts.keys.elementAt(index - 1);
+                      final shifts = groupedShifts[monthKey]!;
+                      // Keep the latest month expanded by default
+                      return _MonthExpansionSection(
+                        monthKey: monthKey,
+                        shifts: shifts,
+                        initiallyExpanded: index == 1,
+                      );
+                    },
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'עדיין לא נרשמו משמרות.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              itemCount: groupedShifts.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return _GrandTotalCard(
-                    totalHours: grandTotalNetHours,
-                    totalBase: grandTotalBaseSalary,
-                    totalTips: grandTotalTips,
-                  );
-                }
-                final monthKey = groupedShifts.keys.elementAt(index - 1);
-                final shifts = groupedShifts[monthKey]!;
-                // Keep the latest month expanded by default
-                return _MonthExpansionSection(
-                  monthKey: monthKey,
-                  shifts: shifts,
-                  initiallyExpanded: index == 1,
-                );
-              },
-            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         label: const Text('משמרת חדשה'),
         icon: const Icon(Icons.add_rounded),
@@ -131,6 +152,94 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveTimerBanner extends StatelessWidget {
+  final TimerProvider timer;
+
+  const _ActiveTimerBanner({required this.timer});
+
+  @override
+  Widget build(BuildContext context) {
+    final shiftProvider = context.read<ShiftProvider>();
+    final job = shiftProvider.getJobTypeById(timer.jobTypeId ?? "");
+    final pay = timer.calculateLivePay(job?.hourlyRate ?? 40.22);
+
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final d = timer.elapsed;
+    final timeStr =
+        "${d.inHours}:${twoDigits(d.inMinutes.remainder(60))}:${twoDigits(d.inSeconds.remainder(60))}";
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AddShiftScreen(initialTabIndex: 0),
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: timer.isOnBreak
+              ? Colors.orange.shade100
+              : Colors.blue.shade100,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: timer.isOnBreak
+                ? Colors.orange.shade300
+                : Colors.blue.shade300,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              timer.isOnBreak
+                  ? Icons.pause_circle_filled_rounded
+                  : Icons.play_circle_filled_rounded,
+              color: timer.isOnBreak
+                  ? Colors.orange.shade800
+                  : Colors.blue.shade800,
+              size: 32,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    timer.isOnBreak
+                        ? 'משמרת בהפסקה...'
+                        : 'משמרת פעילה: ${job?.name ?? ""}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: timer.isOnBreak
+                          ? Colors.orange.shade900
+                          : Colors.blue.shade900,
+                    ),
+                  ),
+                  Text(
+                    'זמן: $timeStr | ₪${pay.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: timer.isOnBreak
+                          ? Colors.orange.shade800
+                          : Colors.blue.shade800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: timer.isOnBreak ? Colors.orange : Colors.blue,
+            ),
+          ],
         ),
       ),
     );
@@ -164,7 +273,7 @@ class _GrandTotalCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -177,7 +286,9 @@ class _GrandTotalCard extends StatelessWidget {
             Text(
               'סה"כ הצטבר (כללי)',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onPrimary.withValues(alpha: 0.8),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -195,7 +306,7 @@ class _GrandTotalCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -238,7 +349,9 @@ class _HeaderInfoItem extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+            color: Theme.of(
+              context,
+            ).colorScheme.onPrimary.withValues(alpha: 0.7),
             fontSize: 12,
           ),
         ),
@@ -262,7 +375,7 @@ class _VerticalDivider extends StatelessWidget {
     return Container(
       height: 24,
       width: 1,
-      color: Colors.white.withOpacity(0.2),
+      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 }
@@ -298,6 +411,19 @@ class _MonthExpansionSection extends StatelessWidget {
     final monthName = DateFormat.MMMM('he_IL').format(date);
     final year = date.year;
 
+    // Check if active timer belongs to this month
+    final timerProvider = context.watch<TimerProvider>();
+    if (timerProvider.isRunning &&
+        timerProvider.startTime != null &&
+        timerProvider.startTime!.year == year &&
+        timerProvider.startTime!.month == date.month) {
+      final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
+      final rate = job?.hourlyRate ?? 40.22;
+      totalNetHours += timerProvider.netMinutes / 60.0;
+      totalBaseSalary += (timerProvider.netMinutes / 60.0) * rate;
+      totalTips += timerProvider.tips;
+    }
+
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
@@ -308,7 +434,7 @@ class _MonthExpansionSection extends StatelessWidget {
           border: Border.all(
             color: Theme.of(
               context,
-            ).colorScheme.outlineVariant.withOpacity(0.5),
+            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
         child: ExpansionTile(
@@ -493,7 +619,7 @@ class _ShiftTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: Theme.of(
                 context,
-              ).colorScheme.primaryContainer.withOpacity(0.5),
+              ).colorScheme.primaryContainer.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(

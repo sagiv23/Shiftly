@@ -42,7 +42,8 @@ class Shift extends HiveObject {
   });
 
   double get durationHours {
-    var diff = endTime.difference(startTime).inMinutes / 60.0;
+    // Use seconds for high precision, especially for short timer-based shifts
+    var diff = endTime.difference(startTime).inSeconds / 3600.0;
     if (diff < 0) {
       // Overnight shift support
       diff += 24.0;
@@ -51,10 +52,13 @@ class Shift extends HiveObject {
   }
 
   double get netHours {
+    double net;
     if ((breakType ?? BreakType.none) == BreakType.unpaid) {
-      return durationHours - ((unpaidBreakMinutes ?? 45.0) / 60.0);
+      net = durationHours - ((unpaidBreakMinutes ?? 45.0) / 60.0);
+    } else {
+      net = durationHours;
     }
-    return durationHours;
+    return net < 0 ? 0.0 : net;
   }
 
   double calculateTotalPay(double hourlyRate) {

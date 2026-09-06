@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/settings_provider.dart';
 import 'providers/shift_provider.dart';
+import 'providers/timer_provider.dart';
 import 'screens/splash_screen.dart';
 import 'services/persistence_service.dart';
 import 'theme/app_theme.dart';
@@ -24,6 +25,9 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => ShiftProvider(persistenceService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => TimerProvider(persistenceService),
         ),
       ],
       child: const SalaryTrackerApp(),
