@@ -153,6 +153,16 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          body: |
+            ### Shiftly Release
+            
+            **הנחיות להתקנה:**
+            - **Android:** מומלץ להוריד את קובץ ה-`app-arm64-v8a-release.apk`. 
+            - **שימו לב:** קובץ ה-`app-release.aab` מיועד ל-Play Store בלבד ואינו ניתן להתקנה ישירה.
+            - **Desktop:** יש להוריד את קובץ ה-Zip, לחלץ ולהריץ.
+            
+            ---
+            *הבנייה בוצעה באופן אוטומטי על ידי GitHub Actions.*
           files: |
             release-assets/app-*.apk
             release-assets/app-release.aab
