@@ -7,6 +7,7 @@ import '../models/shift.dart';
 import '../providers/settings_provider.dart';
 import '../providers/shift_provider.dart';
 import 'add_shift_screen.dart';
+import 'calendar_screen.dart';
 import 'job_types_screen.dart';
 import 'settings_screen.dart';
 
@@ -38,6 +39,14 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month_rounded),
+            tooltip: 'לוח שנה',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CalendarScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.work_outline_rounded),
             tooltip: 'הגדרות עבודה',
