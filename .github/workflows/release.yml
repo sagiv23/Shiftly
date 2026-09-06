@@ -29,7 +29,10 @@ jobs:
         run: echo "kotlin.incremental=false" >> android/gradle.properties
 
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release
 
       - name: Build Web
         run: flutter build web --release
@@ -49,7 +52,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path staging -Force
-          Copy-Item build/app/outputs/flutter-apk/app-release.apk staging/
+          Copy-Item build/app/outputs/flutter-apk/app-*-release.apk staging/
+          Copy-Item build/app/outputs/bundle/release/app-release.aab staging/
           Copy-Item build/web-release.zip staging/
           Copy-Item build/windows-release.zip staging/
 
@@ -150,7 +154,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-assets/app-release.apk
+            release-assets/app-*.apk
+            release-assets/app-release.aab
             release-assets/web-release.zip
             release-assets/windows-release.zip
             release-assets/Shiftly-iOS.ipa
