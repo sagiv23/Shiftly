@@ -265,7 +265,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                   provider.deleteJobType(job.id);
 
                   final messenger = ScaffoldMessenger.of(context);
-                  messenger.clearSnackBars();
+                  messenger.hideCurrentSnackBar();
                   messenger.showSnackBar(
                     SnackBar(
                       content: Text('תפקיד "$name" נמחק'),
@@ -273,7 +273,9 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                       behavior: SnackBarBehavior.floating,
                       action: SnackBarAction(
                         label: 'ביטול',
-                        onPressed: () => provider.addJobType(job),
+                        onPressed: () {
+                          provider.addJobType(job);
+                        },
                       ),
                     ),
                   );

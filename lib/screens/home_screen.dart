@@ -574,7 +574,7 @@ class _ShiftTile extends StatelessWidget {
         shiftProvider.deleteShift(shift.id);
 
         final messenger = ScaffoldMessenger.of(context);
-        messenger.clearSnackBars();
+        messenger.hideCurrentSnackBar();
         messenger.showSnackBar(
           SnackBar(
             content: Text('משמרת מיום $dateStr נמחקה'),
@@ -582,7 +582,9 @@ class _ShiftTile extends StatelessWidget {
             duration: const Duration(milliseconds: 4500),
             action: SnackBarAction(
               label: 'ביטול',
-              onPressed: () => shiftProvider.addShift(shift),
+              onPressed: () {
+                shiftProvider.addShift(shift);
+              },
             ),
           ),
         );
