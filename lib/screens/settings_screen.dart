@@ -58,10 +58,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 12),
           Card(
             child: SwitchListTile(
-              title: const Text('תזכורת למשמרת'),
-              subtitle: Text(
-                'שלח התראה ${settings.shiftReminderDurationHours % 1 == 0 ? settings.shiftReminderDurationHours.toInt() : settings.shiftReminderDurationHours} שעות לפני תחילת המשמרת',
-              ),
+              title: const Text('התראות'),
+              subtitle: const Text('אפשר שליחת התראות מהאפליקציה'),
               secondary: const Icon(Icons.notifications_active_outlined),
               value: settings.shiftRemindersEnabled,
               onChanged: (val) async {
