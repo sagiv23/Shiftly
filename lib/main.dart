@@ -46,7 +46,21 @@ void main() async {
     // Still try to run the app even if some services fail
     runApp(
       const MaterialApp(
-        home: Scaffold(body: Center(child: Text('שגיאה בעליית האפליקציה'))),
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [Locale('he', 'IL')],
+        locale: Locale('he', 'IL'),
+        home: Scaffold(
+          body: Center(
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text('שגיאה בעליית האפליקציה. נא לנסות שוב.'),
+            ),
+          ),
+        ),
       ),
     );
   }

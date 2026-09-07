@@ -26,16 +26,10 @@ class NotificationService {
     try {
       if (!_isSupported) return;
 
+      // Initialize timezones
       tz.initializeTimeZones();
-      // Attempt to set local timezone.
-      // Default to Asia/Jerusalem for this Hebrew app as a fallback
-      try {
-        tz.setLocalLocation(tz.getLocation('Asia/Jerusalem'));
-      } catch (e) {
-        debugPrint(
-          'Could not set Asia/Jerusalem timezone, falling back to UTC',
-        );
-      }
+
+      // Let the system handle local time naturally for battery efficiency
 
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/launcher_icon');
@@ -81,11 +75,13 @@ class NotificationService {
         },
       );
 
+      // Simple permission request for battery efficiency
       if (!kIsWeb && Platform.isAndroid) {
         final androidPlugin = _notificationsPlugin
             .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin
             >();
+
         await androidPlugin?.requestNotificationsPermission();
       }
     } catch (e) {
@@ -104,7 +100,14 @@ class NotificationService {
     final reminderTime = startTime.subtract(
       Duration(minutes: (reminderDurationHours * 60).toInt()),
     );
-    if (reminderTime.isBefore(DateTime.now())) return;
+
+    final now = DateTime.now();
+
+    // Skip if reminder is in the past or within the next 5 minutes (Battery Saving)
+    if (reminderTime.isBefore(now.add(const Duration(minutes: 5)))) {
+      debugPrint('Reminder too close or in past, skipping for battery saving.');
+      return;
+    }
 
     final androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'shift_reminder_channel',
@@ -114,8 +117,8 @@ class NotificationService {
       priority: Priority.high,
     );
 
-    final DarwinNotificationDetails darwinPlatformChannelSpecifics =
-        const DarwinNotificationDetails(
+    const DarwinNotificationDetails darwinPlatformChannelSpecifics =
+        DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -137,10 +140,13 @@ class NotificationService {
       'המשמרת שלך ($shiftName) מתחילה בעוד $timeText!',
       tz.TZDateTime.from(reminderTime, tz.local),
       notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      // Battery friendly
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
+
+    debugPrint('Scheduled reminder for $shiftName at $reminderTime');
   }
 
   static Future<void> showTimerNotification({
