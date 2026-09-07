@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/providers/settings_provider.dart';
+import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/screens/add_shift_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
-
-import '../models/break_type.dart';
-import '../models/shift.dart';
-import '../providers/settings_provider.dart';
-import '../providers/shift_provider.dart';
-import 'add_shift_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/models/job_type.dart';
+import 'package:shiftly/providers/settings_provider.dart';
+import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/screens/home_screen.dart';
+import 'package:shiftly/widgets/app_icon.dart';
 import 'package:uuid/uuid.dart';
-
-import '../models/job_type.dart';
-import '../providers/settings_provider.dart';
-import '../providers/shift_provider.dart';
-import '../widgets/app_icon.dart';
-import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

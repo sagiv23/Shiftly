@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
-
-import 'providers/settings_provider.dart';
-import 'providers/shift_provider.dart';
-import 'providers/timer_provider.dart';
-import 'screens/splash_screen.dart';
-import 'services/notification_service.dart';
-import 'services/persistence_service.dart';
-import 'theme/app_theme.dart';
+import 'package:shiftly/providers/settings_provider.dart';
+import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/providers/timer_provider.dart';
+import 'package:shiftly/screens/splash_screen.dart';
+import 'package:shiftly/services/notification_service.dart';
+import 'package:shiftly/services/persistence_service.dart';
+import 'package:shiftly/theme/app_theme.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    
+
     // Initialize services in parallel where possible, but safely
     await Future.wait([
       NotificationService.init(),
@@ -45,7 +44,11 @@ void main() async {
   } catch (e) {
     debugPrint('Critical error during initialization: $e');
     // Still try to run the app even if some services fail
-    runApp(const MaterialApp(home: Scaffold(body: Center(child: Text('שגיאה בעליית האפליקציה')))));
+    runApp(
+      const MaterialApp(
+        home: Scaffold(body: Center(child: Text('שגיאה בעליית האפליקציה'))),
+      ),
+    );
   }
 }
 

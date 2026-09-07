@@ -1,7 +1,6 @@
+import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/models/shift.dart';
 import 'package:uuid/uuid.dart';
-
-import '../models/break_type.dart';
-import '../models/shift.dart';
 
 class ShiftParser {
   static final Uuid _uuid = const Uuid();

@@ -4,11 +4,10 @@ import 'package:flutter/foundation.dart'
     show debugPrint, defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shiftly/main.dart';
+import 'package:shiftly/screens/add_shift_screen.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-
-import '../main.dart';
-import '../screens/add_shift_screen.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -28,12 +27,14 @@ class NotificationService {
       if (!_isSupported) return;
 
       tz.initializeTimeZones();
-      // Attempt to set local timezone. 
+      // Attempt to set local timezone.
       // Default to Asia/Jerusalem for this Hebrew app as a fallback
       try {
         tz.setLocalLocation(tz.getLocation('Asia/Jerusalem'));
       } catch (e) {
-        debugPrint('Could not set Asia/Jerusalem timezone, falling back to UTC');
+        debugPrint(
+          'Could not set Asia/Jerusalem timezone, falling back to UTC',
+        );
       }
 
       const AndroidInitializationSettings initializationSettingsAndroid =
@@ -41,21 +42,21 @@ class NotificationService {
 
       const DarwinInitializationSettings initializationSettingsDarwin =
           DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+          );
 
       const LinuxInitializationSettings initializationSettingsLinux =
           LinuxInitializationSettings(defaultActionName: 'Open');
 
       const InitializationSettings initializationSettings =
           InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsDarwin,
-        macOS: initializationSettingsDarwin,
-        linux: initializationSettingsLinux,
-      );
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsDarwin,
+            macOS: initializationSettingsDarwin,
+            linux: initializationSettingsLinux,
+          );
 
       await _notificationsPlugin.initialize(
         initializationSettings,
@@ -83,7 +84,8 @@ class NotificationService {
       if (!kIsWeb && Platform.isAndroid) {
         final androidPlugin = _notificationsPlugin
             .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>();
+              AndroidFlutterLocalNotificationsPlugin
+            >();
         await androidPlugin?.requestNotificationsPermission();
       }
     } catch (e) {
@@ -111,10 +113,10 @@ class NotificationService {
 
     final DarwinNotificationDetails darwinPlatformChannelSpecifics =
         const DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        );
 
     final notificationDetails = NotificationDetails(
       android: androidPlatformChannelSpecifics,

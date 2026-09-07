@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/models/expense.dart';
+import 'package:shiftly/providers/shift_provider.dart';
 import 'package:uuid/uuid.dart';
-
-import '../models/expense.dart';
-import '../providers/shift_provider.dart';
 
 class ExpensesScreen extends StatelessWidget {
   void _showExpenseDialog(BuildContext context, [Expense? expense]) {

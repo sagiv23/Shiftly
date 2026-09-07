@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
-import '../models/break_type.dart';
-import '../models/shift.dart';
-import '../providers/settings_provider.dart';
-import '../providers/shift_provider.dart';
-import '../providers/timer_provider.dart';
-import 'add_shift_screen.dart';
-import 'calendar_screen.dart';
-import 'expenses_screen.dart';
-import 'job_types_screen.dart';
-import 'settings_screen.dart';
+import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/providers/settings_provider.dart';
+import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/providers/timer_provider.dart';
+import 'package:shiftly/screens/add_shift_screen.dart';
+import 'package:shiftly/screens/calendar_screen.dart';
+import 'package:shiftly/screens/expenses_screen.dart';
+import 'package:shiftly/screens/job_types_screen.dart';
+import 'package:shiftly/screens/settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

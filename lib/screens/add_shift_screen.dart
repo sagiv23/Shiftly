@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/models/job_type.dart';
+import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/providers/settings_provider.dart';
+import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/providers/timer_provider.dart';
+import 'package:shiftly/services/shift_parser.dart';
 import 'package:uuid/uuid.dart';
-
-import '../models/break_type.dart';
-import '../models/job_type.dart';
-import '../models/shift.dart';
-import '../providers/settings_provider.dart';
-import '../providers/shift_provider.dart';
-import '../providers/timer_provider.dart';
-import '../services/shift_parser.dart';
 
 class AddShiftScreen extends StatefulWidget {
   final Shift? shiftToEdit;

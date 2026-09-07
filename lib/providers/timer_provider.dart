@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
-import '../models/break_type.dart';
-import '../services/notification_service.dart';
-import '../services/persistence_service.dart';
+import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/services/notification_service.dart';
+import 'package:shiftly/services/persistence_service.dart';
 
 class TimerProvider with ChangeNotifier {
   final PersistenceService _persistence;

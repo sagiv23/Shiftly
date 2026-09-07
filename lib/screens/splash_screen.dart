@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../providers/settings_provider.dart';
-import '../widgets/app_icon.dart';
-import 'home_screen.dart';
-import 'onboarding_screen.dart';
+import 'package:shiftly/providers/settings_provider.dart';
+import 'package:shiftly/screens/home_screen.dart';
+import 'package:shiftly/screens/onboarding_screen.dart';
+import 'package:shiftly/widgets/app_icon.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

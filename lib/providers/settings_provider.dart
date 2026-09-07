@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../services/persistence_service.dart';
+import 'package:shiftly/services/persistence_service.dart';
 
 class SettingsProvider with ChangeNotifier {
   final PersistenceService _persistence;

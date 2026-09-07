@@ -1,11 +1,10 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-
-import '../models/expense.dart';
-import '../models/job_type.dart';
-import '../models/shift.dart';
-import '../services/notification_service.dart';
-import '../services/persistence_service.dart';
+import 'package:shiftly/models/expense.dart';
+import 'package:shiftly/models/job_type.dart';
+import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/services/notification_service.dart';
+import 'package:shiftly/services/persistence_service.dart';
 
 class ShiftProvider with ChangeNotifier {
   final PersistenceService _persistence;
@@ -61,7 +60,7 @@ class ShiftProvider with ChangeNotifier {
     for (var shift in shifts) {
       NotificationService.cancelNotification(shift.id.hashCode);
     }
-    
+
     // Schedule only if enabled
     if (_remindersEnabled) {
       for (var shift in shifts) {

@@ -1,9 +1,8 @@
 import 'package:hive_flutter/hive_flutter.dart';
-
-import '../models/break_type.dart';
-import '../models/expense.dart';
-import '../models/job_type.dart';
-import '../models/shift.dart';
+import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/models/expense.dart';
+import 'package:shiftly/models/job_type.dart';
+import 'package:shiftly/models/shift.dart';
 
 class PersistenceService {
   static const String shiftsBoxName = 'shifts';
