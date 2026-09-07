@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../models/break_type.dart';
 import '../services/notification_service.dart';
 import '../services/persistence_service.dart';
@@ -13,7 +15,10 @@ class TimerProvider with ChangeNotifier {
     NotificationService.onActionReceived = (actionId) {
       final box = _persistence.settingsBox;
       final paidDur = box.get('paidBreakDurationMinutes', defaultValue: 20.0);
-      final unpaidDur = box.get('unpaidBreakDurationMinutes', defaultValue: 45.0);
+      final unpaidDur = box.get(
+        'unpaidBreakDurationMinutes',
+        defaultValue: 45.0,
+      );
 
       if (actionId == 'start_paid_break') {
         toggleBreak(BreakType.paid, paidDur);
@@ -39,16 +44,20 @@ class TimerProvider with ChangeNotifier {
   // Total seconds to deduct from (now - startTime)
   // This includes finished unpaid breaks and pauses in review mode.
   double _totalDeductedSeconds = 0.0;
-  
+
   String? _jobTypeId;
   double _tips = 0.0;
 
   DateTime? get startTime => _startTime;
+
   DateTime? get reviewEndTime => _reviewEndTime;
+
   bool get isRunning => _isRunning;
+
   bool get isOnBreak => _isOnBreak;
+
   BreakType? get activeBreakType => _activeBreakType;
-  
+
   // For the Shift model: only unpaid break time is stored here
   double get accumulatedUnpaidMinutes {
     // We don't want to include "pauses" from review mode in the official "Break" field of the shift,
@@ -57,11 +66,12 @@ class TimerProvider with ChangeNotifier {
   }
 
   String? get jobTypeId => _jobTypeId;
+
   double get tips => _tips;
 
   Duration get elapsed {
     if (_startTime == null) return Duration.zero;
-    
+
     DateTime end;
     double currentDeduction = _totalDeductedSeconds;
 
@@ -76,7 +86,8 @@ class TimerProvider with ChangeNotifier {
       end = _isRunning ? DateTime.now() : (_reviewEndTime ?? DateTime.now());
     }
 
-    final duration = end.difference(_startTime!).inSeconds - currentDeduction.toInt();
+    final duration =
+        end.difference(_startTime!).inSeconds - currentDeduction.toInt();
     return Duration(seconds: duration < 0 ? 0 : duration);
   }
 
@@ -225,8 +236,9 @@ class TimerProvider with ChangeNotifier {
     } else {
       // If switching from another break, finalize previous if it was unpaid
       if (_isOnBreak && _activeBreakType == BreakType.unpaid) {
-        _totalDeductedSeconds +=
-            DateTime.now().difference(_breakStartTime!).inSeconds;
+        _totalDeductedSeconds += DateTime.now()
+            .difference(_breakStartTime!)
+            .inSeconds;
       }
 
       _isOnBreak = true;
@@ -253,8 +265,9 @@ class TimerProvider with ChangeNotifier {
     if (!_isOnBreak) return;
 
     if (_activeBreakType == BreakType.unpaid && _breakStartTime != null) {
-      _totalDeductedSeconds +=
-          DateTime.now().difference(_breakStartTime!).inSeconds;
+      _totalDeductedSeconds += DateTime.now()
+          .difference(_breakStartTime!)
+          .inSeconds;
     }
 
     _isOnBreak = false;

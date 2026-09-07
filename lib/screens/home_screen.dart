@@ -9,6 +9,7 @@ import '../providers/shift_provider.dart';
 import '../providers/timer_provider.dart';
 import 'add_shift_screen.dart';
 import 'calendar_screen.dart';
+import 'expenses_screen.dart';
 import 'job_types_screen.dart';
 import 'settings_screen.dart';
 
@@ -25,6 +26,7 @@ class HomeScreen extends StatelessWidget {
     double grandTotalNetHours = 0;
     double grandTotalBaseSalary = 0;
     double grandTotalTips = 0;
+    double grandTotalExpenses = 0;
 
     for (var shift in shiftProvider.shifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
@@ -32,6 +34,10 @@ class HomeScreen extends StatelessWidget {
       grandTotalNetHours += shift.netHours;
       grandTotalBaseSalary += shift.netHours * rate;
       grandTotalTips += shift.tips;
+    }
+
+    for (var expense in shiftProvider.expenses) {
+      grandTotalExpenses += expense.amount;
     }
 
     // Include Active or Paused Timer in Grand Total
@@ -45,13 +51,27 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.calendar_month_rounded),
-          tooltip: 'לוח שנה',
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CalendarScreen()),
-          ),
+        leadingWidth: 100,
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.calendar_month_rounded),
+              tooltip: 'לוח שנה',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarScreen()),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.receipt_long_rounded),
+              tooltip: 'הוצאות',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ExpensesScreen()),
+              ),
+            ),
+          ],
         ),
         title: const Text(
           'Shiftly',
@@ -114,6 +134,7 @@ class HomeScreen extends StatelessWidget {
                           totalHours: grandTotalNetHours,
                           totalBase: grandTotalBaseSalary,
                           totalTips: grandTotalTips,
+                          totalExpenses: grandTotalExpenses,
                         );
                       }
                       final monthKey = groupedShifts.keys.elementAt(index - 1);
@@ -253,11 +274,13 @@ class _GrandTotalCard extends StatelessWidget {
   final double totalHours;
   final double totalBase;
   final double totalTips;
+  final double totalExpenses;
 
   const _GrandTotalCard({
     required this.totalHours,
     required this.totalBase,
     required this.totalTips,
+    required this.totalExpenses,
   });
 
   @override
@@ -287,7 +310,7 @@ class _GrandTotalCard extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'סה"כ הצטבר (כללי)',
+              'סה"כ הצטבר (נטו פחות הוצאות)',
               style: TextStyle(
                 color: Theme.of(
                   context,
@@ -298,7 +321,7 @@ class _GrandTotalCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "₪${(totalBase + totalTips).toStringAsFixed(2)}",
+              "₪${(totalBase + totalTips - totalExpenses).toStringAsFixed(2)}",
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onPrimary,
                 fontSize: 36,
@@ -307,7 +330,7 @@ class _GrandTotalCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
@@ -321,13 +344,18 @@ class _GrandTotalCard extends StatelessWidget {
                   ),
                   _VerticalDivider(),
                   _HeaderInfoItem(
-                    label: 'שכר בסיס',
+                    label: 'בסיס',
                     value: "₪${totalBase.toStringAsFixed(2)}",
                   ),
                   _VerticalDivider(),
                   _HeaderInfoItem(
                     label: 'טיפים',
                     value: "₪${totalTips.toStringAsFixed(2)}",
+                  ),
+                  _VerticalDivider(),
+                  _HeaderInfoItem(
+                    label: 'הוצאות',
+                    value: "₪${totalExpenses.toStringAsFixed(2)}",
                   ),
                 ],
               ),
@@ -401,6 +429,7 @@ class _MonthExpansionSection extends StatelessWidget {
     double totalNetHours = 0;
     double totalBaseSalary = 0;
     double totalTips = 0;
+    double totalMonthExpenses = 0;
 
     for (var shift in shifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
@@ -408,6 +437,11 @@ class _MonthExpansionSection extends StatelessWidget {
       totalNetHours += shift.netHours;
       totalBaseSalary += shift.netHours * rate;
       totalTips += shift.tips;
+    }
+
+    final allExpenses = shiftProvider.expensesGroupedByMonth[monthKey] ?? [];
+    for (var expense in allExpenses) {
+      totalMonthExpenses += expense.amount;
     }
 
     final date = DateTime.parse("$monthKey-01");
@@ -456,7 +490,7 @@ class _MonthExpansionSection extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            "₪${(totalBaseSalary + totalTips).toStringAsFixed(2)} סה\"כ | ${totalNetHours.toStringAsFixed(2)} שעות",
+            "₪${(totalBaseSalary + totalTips - totalMonthExpenses).toStringAsFixed(2)} סה\"כ נטו | ${totalNetHours.toStringAsFixed(2)} שעות",
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -471,7 +505,7 @@ class _MonthExpansionSection extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _SummaryItem(
-                      label: 'שכר בסיס',
+                      label: 'בסיס',
                       value: "₪${totalBaseSalary.toStringAsFixed(2)}",
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
@@ -481,9 +515,14 @@ class _MonthExpansionSection extends StatelessWidget {
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
-                      label: 'סה"כ',
+                      label: 'הוצאות',
+                      value: "₪${totalMonthExpenses.toStringAsFixed(2)}",
+                    ),
+                    const VerticalDivider(width: 1, indent: 4, endIndent: 4),
+                    _SummaryItem(
+                      label: 'נטו',
                       value:
-                          "₪${(totalBaseSalary + totalTips).toStringAsFixed(2)}",
+                          "₪${(totalBaseSalary + totalTips - totalMonthExpenses).toStringAsFixed(2)}",
                       isBold: true,
                     ),
                   ],

@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
+import '../models/expense.dart';
 import '../models/job_type.dart';
 import '../models/shift.dart';
 import '../services/persistence_service.dart';
@@ -10,8 +11,14 @@ class ShiftProvider with ChangeNotifier {
 
   ShiftProvider(this._persistence);
 
+  // Shifts
   List<Shift> get shifts =>
       _persistence.shiftsBox.values.toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
+
+  // Expenses
+  List<Expense> get expenses =>
+      _persistence.expensesBox.values.toList()
         ..sort((a, b) => b.date.compareTo(a.date));
 
   List<JobType> get jobTypes => _persistence.jobTypesBox.values.toList();
@@ -28,6 +35,22 @@ class ShiftProvider with ChangeNotifier {
 
   Future<void> deleteShift(String id) async {
     await _persistence.shiftsBox.delete(id);
+    notifyListeners();
+  }
+
+  // Expense Methods
+  Future<void> addExpense(Expense expense) async {
+    await _persistence.expensesBox.put(expense.id, expense);
+    notifyListeners();
+  }
+
+  Future<void> updateExpense(Expense expense) async {
+    await expense.save();
+    notifyListeners();
+  }
+
+  Future<void> deleteExpense(String id) async {
+    await _persistence.expensesBox.delete(id);
     notifyListeners();
   }
 
@@ -63,6 +86,14 @@ class ShiftProvider with ChangeNotifier {
     return groupBy(
       shifts,
       (Shift s) => "${s.date.year}-${s.date.month.toString().padLeft(2, '0')}",
+    );
+  }
+
+  Map<String, List<Expense>> get expensesGroupedByMonth {
+    return groupBy(
+      expenses,
+      (Expense e) =>
+          "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}",
     );
   }
 }
