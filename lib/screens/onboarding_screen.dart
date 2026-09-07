@@ -21,6 +21,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // Break State
   late double _paidMinutes;
   late double _unpaidMinutes;
+  late bool _remindersEnabled;
+  late double _reminderHours;
 
   @override
   void initState() {
@@ -28,10 +30,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final settings = context.read<SettingsProvider>();
     _paidMinutes = settings.paidBreakDurationMinutes;
     _unpaidMinutes = settings.unpaidBreakDurationMinutes;
+    _remindersEnabled = settings.shiftRemindersEnabled;
+    _reminderHours = settings.shiftReminderDurationHours;
   }
 
   void _nextPage() {
-    if (_currentPage < 2) {
+    if (_currentPage < 3) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
@@ -44,6 +48,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _finishOnboarding() async {
     final settings = context.read<SettingsProvider>();
     await settings.setBreakDurations(_paidMinutes, _unpaidMinutes);
+    await settings.setShiftRemindersEnabled(_remindersEnabled);
+    await settings.setShiftReminderDurationHours(_reminderHours);
     await settings.completeOnboarding();
 
     if (!mounted) return;
@@ -66,6 +72,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   _buildWelcomePage(),
                   _buildBreakSettingsPage(),
+                  _buildReminderSettingsPage(),
                   _buildJobTypesPage(),
                 ],
               ),
@@ -162,10 +169,73 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  Widget _buildReminderSettingsPage() {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.notifications_active_outlined,
+            size: 64,
+            color: Colors.blue,
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'תזכורות למשמרת',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Arial',
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'האם תרצה לקבל תזכורת לפני שהמשמרת מתחילה?',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+              fontFamily: 'Arial',
+            ),
+          ),
+          const SizedBox(height: 40),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'הפעל תזכורות',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            subtitle: const Text('תזכורת אוטומטית לפני כל משמרת'),
+            value: _remindersEnabled,
+            onChanged: (val) => setState(() => _remindersEnabled = val),
+          ),
+          if (_remindersEnabled) ...[
+            const SizedBox(height: 32),
+            _buildDurationSlider(
+              label: 'כמה זמן לפני? (שעות)',
+              value: _reminderHours,
+              min: 0.5,
+              max: 24,
+              divisions: 47,
+              // 0.5 steps
+              displaySuffix: 'שעות',
+              onChanged: (val) => setState(() => _reminderHours = val),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildDurationSlider({
     required String label,
     required double value,
     required ValueChanged<double> onChanged,
+    double min = 0,
+    double max = 120,
+    int divisions = 24,
+    String displaySuffix = 'דק\'',
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +251,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Text(
-              '${value.toInt()} דק\'',
+              '${value % 1 == 0 ? value.toInt() : value} $displaySuffix',
               style: const TextStyle(
                 color: Colors.blue,
                 fontWeight: FontWeight.bold,
@@ -191,9 +261,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         Slider(
           value: value,
-          min: 0,
-          max: 120,
-          divisions: 24,
+          min: min,
+          max: max,
+          divisions: divisions,
           onChanged: onChanged,
         ),
       ],
@@ -429,7 +499,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           Row(
             children: List.generate(
-              3,
+              4,
               (index) => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 width: 12,
@@ -452,7 +522,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             child: Text(
-              _currentPage == 2 ? 'בוא נתחיל!' : 'המשך',
+              _currentPage == 3 ? 'בוא נתחיל!' : 'המשך',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

@@ -26,6 +26,11 @@ class ShiftProvider with ChangeNotifier {
   bool get _remindersEnabled =>
       _persistence.settingsBox.get('shiftRemindersEnabled', defaultValue: true);
 
+  double get _reminderDuration => _persistence.settingsBox.get(
+    'shiftReminderDurationHours',
+    defaultValue: 4.0,
+  );
+
   Future<void> addShift(Shift shift) async {
     await _persistence.shiftsBox.put(shift.id, shift);
     _scheduleReminder(shift);
@@ -52,6 +57,7 @@ class ShiftProvider with ChangeNotifier {
       id: shift.id.hashCode,
       shiftName: job?.name ?? 'משמרת',
       startTime: shift.startTime,
+      reminderDurationHours: _reminderDuration,
     );
   }
 

@@ -97,16 +97,19 @@ class NotificationService {
     required int id,
     required String shiftName,
     required DateTime startTime,
+    required double reminderDurationHours,
   }) async {
     if (!_isSupported) return;
 
-    final reminderTime = startTime.subtract(const Duration(hours: 4));
+    final reminderTime = startTime.subtract(
+      Duration(minutes: (reminderDurationHours * 60).toInt()),
+    );
     if (reminderTime.isBefore(DateTime.now())) return;
 
     final androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'shift_reminder_channel',
       'תזכורות משמרת',
-      channelDescription: 'תזכורת 4 שעות לפני תחילת משמרת',
+      channelDescription: 'תזכורת לפני תחילת משמרת',
       importance: Importance.high,
       priority: Priority.high,
     );
@@ -124,10 +127,14 @@ class NotificationService {
       macOS: darwinPlatformChannelSpecifics,
     );
 
+    String timeText = reminderDurationHours >= 1
+        ? '${reminderDurationHours.toStringAsFixed(0)} שעות'
+        : '${(reminderDurationHours * 60).toInt()} דקות';
+
     await _notificationsPlugin.zonedSchedule(
       id,
       'תזכורת למשמרת',
-      'המשמרת שלך ($shiftName) מתחילה בעוד 4 שעות!',
+      'המשמרת שלך ($shiftName) מתחילה בעוד $timeText!',
       tz.TZDateTime.from(reminderTime, tz.local),
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

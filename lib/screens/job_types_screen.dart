@@ -153,6 +153,61 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
           100,
         ), // Added bottom padding (100)
         children: [
+          _buildSectionHeader('תזכורות משמרת'),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('הפעל תזכורות'),
+                    subtitle: const Text('שלח התראה לפני תחילת המשמרת'),
+                    value: settings.shiftRemindersEnabled,
+                    onChanged: (val) async {
+                      await settings.setShiftRemindersEnabled(val);
+                      if (mounted) {
+                        context.read<ShiftProvider>().refreshAllReminders();
+                      }
+                    },
+                  ),
+                  if (settings.shiftRemindersEnabled) ...[
+                    const Divider(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'זמן תזכורת (שעות)',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          '${settings.shiftReminderDurationHours % 1 == 0 ? settings.shiftReminderDurationHours.toInt() : settings.shiftReminderDurationHours} שעות',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      value: settings.shiftReminderDurationHours,
+                      min: 0.5,
+                      max: 24,
+                      divisions: 47,
+                      onChanged: (val) async {
+                        await settings.setShiftReminderDurationHours(val);
+                        if (mounted) {
+                          context.read<ShiftProvider>().refreshAllReminders();
+                        }
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
           _buildSectionHeader('זמני הפסקות (דקות)'),
           const SizedBox(height: 12),
           Card(
