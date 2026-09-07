@@ -14,29 +14,39 @@ import 'theme/app_theme.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.init();
-  await initializeDateFormatting('he_IL', null);
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    
+    // Initialize services in parallel where possible, but safely
+    await Future.wait([
+      NotificationService.init(),
+      initializeDateFormatting('he_IL', null),
+    ]);
 
-  final persistenceService = PersistenceService();
-  await persistenceService.init();
+    final persistenceService = PersistenceService();
+    await persistenceService.init();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => SettingsProvider(persistenceService),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ShiftProvider(persistenceService),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => TimerProvider(persistenceService),
-        ),
-      ],
-      child: const SalaryTrackerApp(),
-    ),
-  );
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => SettingsProvider(persistenceService),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => ShiftProvider(persistenceService),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => TimerProvider(persistenceService),
+          ),
+        ],
+        child: const SalaryTrackerApp(),
+      ),
+    );
+  } catch (e) {
+    debugPrint('Critical error during initialization: $e');
+    // Still try to run the app even if some services fail
+    runApp(const MaterialApp(home: Scaffold(body: Center(child: Text('שגיאה בעליית האפליקציה')))));
+  }
 }
 
 class SalaryTrackerApp extends StatelessWidget {

@@ -23,58 +23,61 @@ class NotificationService {
   }
 
   static Future<void> init() async {
-    if (!_isSupported) return;
+    try {
+      if (!_isSupported) return;
 
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/launcher_icon');
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/launcher_icon');
 
-    const DarwinInitializationSettings initializationSettingsDarwin =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
+      const DarwinInitializationSettings initializationSettingsDarwin =
+          DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    const LinuxInitializationSettings initializationSettingsLinux =
-        LinuxInitializationSettings(defaultActionName: 'Open');
+      const LinuxInitializationSettings initializationSettingsLinux =
+          LinuxInitializationSettings(defaultActionName: 'Open');
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsDarwin,
-          macOS: initializationSettingsDarwin,
-          linux: initializationSettingsLinux,
-        );
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsDarwin,
+        macOS: initializationSettingsDarwin,
+        linux: initializationSettingsLinux,
+      );
 
-    await _notificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse details) {
-        if (details.actionId != null) {
-          onActionReceived?.call(details.actionId!);
+      await _notificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse details) {
+          if (details.actionId != null) {
+            onActionReceived?.call(details.actionId!);
 
-          if (details.actionId == 'stop_shift') {
+            if (details.actionId == 'stop_shift') {
+              navigatorKey.currentState?.push(
+                MaterialPageRoute(
+                  builder: (_) => const AddShiftScreen(initialTabIndex: 0),
+                ),
+              );
+            }
+          } else {
             navigatorKey.currentState?.push(
               MaterialPageRoute(
                 builder: (_) => const AddShiftScreen(initialTabIndex: 0),
               ),
             );
           }
-        } else {
-          navigatorKey.currentState?.push(
-            MaterialPageRoute(
-              builder: (_) => const AddShiftScreen(initialTabIndex: 0),
-            ),
-          );
-        }
-      },
-    );
+        },
+      );
 
-    if (!kIsWeb && Platform.isAndroid) {
-      final androidPlugin = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
-      await androidPlugin?.requestNotificationsPermission();
+      if (!kIsWeb && Platform.isAndroid) {
+        final androidPlugin = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        await androidPlugin?.requestNotificationsPermission();
+      }
+    } catch (e) {
+      debugPrint('Error initializing NotificationService: $e');
     }
   }
 
