@@ -1,9 +1,11 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+    show debugPrint, defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 import '../main.dart';
 import '../screens/add_shift_screen.dart';
@@ -15,7 +17,6 @@ class NotificationService {
 
   static bool get _isSupported {
     if (kIsWeb) return false;
-    // flutter_local_notifications supports Android, iOS, macOS, and Linux
     return defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS ||
@@ -25,6 +26,15 @@ class NotificationService {
   static Future<void> init() async {
     try {
       if (!_isSupported) return;
+
+      tz.initializeTimeZones();
+      // Attempt to set local timezone. 
+      // Default to Asia/Jerusalem for this Hebrew app as a fallback
+      try {
+        tz.setLocalLocation(tz.getLocation('Asia/Jerusalem'));
+      } catch (e) {
+        debugPrint('Could not set Asia/Jerusalem timezone, falling back to UTC');
+      }
 
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/launcher_icon');
@@ -79,6 +89,49 @@ class NotificationService {
     } catch (e) {
       debugPrint('Error initializing NotificationService: $e');
     }
+  }
+
+  static Future<void> scheduleShiftReminder({
+    required int id,
+    required String shiftName,
+    required DateTime startTime,
+  }) async {
+    if (!_isSupported) return;
+
+    final reminderTime = startTime.subtract(const Duration(hours: 4));
+    if (reminderTime.isBefore(DateTime.now())) return;
+
+    final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'shift_reminder_channel',
+      'תזכורות משמרת',
+      channelDescription: 'תזכורת 4 שעות לפני תחילת משמרת',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    final DarwinNotificationDetails darwinPlatformChannelSpecifics =
+        const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final notificationDetails = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: darwinPlatformChannelSpecifics,
+      macOS: darwinPlatformChannelSpecifics,
+    );
+
+    await _notificationsPlugin.zonedSchedule(
+      id,
+      'תזכורת למשמרת',
+      'המשמרת שלך ($shiftName) מתחילה בעוד 4 שעות!',
+      tz.TZDateTime.from(reminderTime, tz.local),
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
   static Future<void> showTimerNotification({

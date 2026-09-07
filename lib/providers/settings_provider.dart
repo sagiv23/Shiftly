@@ -13,6 +13,7 @@ class SettingsProvider with ChangeNotifier {
   double _paidBreakDurationMinutes = 20.0;
   double _unpaidBreakDurationMinutes = 45.0;
   bool _hasCompletedOnboarding = false;
+  bool _shiftRemindersEnabled = true;
 
   ThemeMode get themeMode => _themeMode;
 
@@ -21,6 +22,8 @@ class SettingsProvider with ChangeNotifier {
   double get unpaidBreakDurationMinutes => _unpaidBreakDurationMinutes;
 
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
+
+  bool get shiftRemindersEnabled => _shiftRemindersEnabled;
 
   void _loadSettings() {
     final box = _persistence.settingsBox;
@@ -38,12 +41,22 @@ class SettingsProvider with ChangeNotifier {
       'hasCompletedOnboarding',
       defaultValue: false,
     );
+    _shiftRemindersEnabled = box.get(
+      'shiftRemindersEnabled',
+      defaultValue: true,
+    );
     notifyListeners();
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     await _persistence.settingsBox.put('themeMode', mode.index);
+    notifyListeners();
+  }
+
+  Future<void> setShiftRemindersEnabled(bool enabled) async {
+    _shiftRemindersEnabled = enabled;
+    await _persistence.settingsBox.put('shiftRemindersEnabled', enabled);
     notifyListeners();
   }
 

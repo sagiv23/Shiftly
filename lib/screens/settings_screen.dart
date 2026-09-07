@@ -53,6 +53,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             selected: {settings.themeMode},
             onSelectionChanged: (val) => settings.setThemeMode(val.first),
           ),
+          const SizedBox(height: 32),
+          _buildSectionHeader('תזכורות'),
+          const SizedBox(height: 12),
+          Card(
+            child: SwitchListTile(
+              title: const Text('תזכורת למשמרת'),
+              subtitle: const Text('שלח התראה 4 שעות לפני תחילת המשמרת'),
+              secondary: const Icon(Icons.notifications_active_outlined),
+              value: settings.shiftRemindersEnabled,
+              onChanged: (val) async {
+                await settings.setShiftRemindersEnabled(val);
+                if (mounted) {
+                  context.read<ShiftProvider>().refreshAllReminders();
+                }
+              },
+            ),
+          ),
         ],
       ),
     );

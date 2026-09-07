@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/expense.dart';
 import '../models/job_type.dart';
 import '../models/shift.dart';
+import '../services/notification_service.dart';
 import '../services/persistence_service.dart';
 
 class ShiftProvider with ChangeNotifier {
@@ -23,19 +24,50 @@ class ShiftProvider with ChangeNotifier {
 
   List<JobType> get jobTypes => _persistence.jobTypesBox.values.toList();
 
+  bool get _remindersEnabled =>
+      _persistence.settingsBox.get('shiftRemindersEnabled', defaultValue: true);
+
   Future<void> addShift(Shift shift) async {
     await _persistence.shiftsBox.put(shift.id, shift);
+    _scheduleReminder(shift);
     notifyListeners();
   }
 
   Future<void> updateShift(Shift shift) async {
     await shift.save();
+    _scheduleReminder(shift);
     notifyListeners();
   }
 
   Future<void> deleteShift(String id) async {
     await _persistence.shiftsBox.delete(id);
+    NotificationService.cancelNotification(id.hashCode);
     notifyListeners();
+  }
+
+  void _scheduleReminder(Shift shift) {
+    if (!_remindersEnabled) return;
+
+    final job = getJobTypeById(shift.jobTypeId);
+    NotificationService.scheduleShiftReminder(
+      id: shift.id.hashCode,
+      shiftName: job?.name ?? 'משמרת',
+      startTime: shift.startTime,
+    );
+  }
+
+  void refreshAllReminders() {
+    // Cancel all first
+    for (var shift in shifts) {
+      NotificationService.cancelNotification(shift.id.hashCode);
+    }
+    
+    // Schedule only if enabled
+    if (_remindersEnabled) {
+      for (var shift in shifts) {
+        _scheduleReminder(shift);
+      }
+    }
   }
 
   // Expense Methods
