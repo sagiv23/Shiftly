@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/utils/ui_utils.dart';
 import 'package:uuid/uuid.dart';
 
 class WorkConfigScreen extends StatefulWidget {
@@ -59,7 +60,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
             child: const Text('ביטול'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               final provider = context.read<ShiftProvider>();
               final name = nameController.text.trim();
               final rate = double.tryParse(rateController.text) ?? 0.0;
@@ -67,7 +68,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
               final messenger = ScaffoldMessenger.of(context);
 
               if (name.isEmpty) {
-                messenger.clearSnackBars();
+                messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text('נא להזין שם לתפקיד'),
@@ -85,7 +86,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
               );
 
               if (exists) {
-                messenger.clearSnackBars();
+                messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text('תפקיד בשם זה כבר קיים'),
@@ -96,7 +97,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
               }
 
               if (rate < 0) {
-                messenger.clearSnackBars();
+                messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text('השכר לא יכול להיות שלילי'),
@@ -105,6 +106,15 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                 );
                 return;
               }
+
+              final confirmed = await UIUtils.showConfirmDialog(
+                context: context,
+                title: job == null ? 'הוספת תפקיד' : 'עדכון תפקיד',
+                content:
+                    'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)}?',
+              );
+
+              if (confirmed != true) return;
 
               if (job == null) {
                 provider.addJobType(
@@ -115,7 +125,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                 job.hourlyRate = rate;
                 provider.updateJobType(job);
               }
-              Navigator.pop(ctx);
+              if (mounted) Navigator.pop(ctx);
             },
             child: const Text('שמור'),
           ),
@@ -234,15 +244,26 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       final paid =
                           double.tryParse(_paidController.text) ?? 20.0;
                       final unpaid =
                           double.tryParse(_unpaidController.text) ?? 45.0;
+
+                      final confirmed = await UIUtils.showConfirmDialog(
+                        context: context,
+                        title: 'עדכון זמני הפסקה',
+                        content:
+                            'האם לעדכן את זמני ברירת המחדל ל-$paid דק\' בתשלום ו-$unpaid דק\' ללא תשלום?',
+                      );
+
+                      if (confirmed != true) return;
+
                       settings.setBreakDurations(paid, unpaid);
 
+                      if (!mounted) return;
                       final messenger = ScaffoldMessenger.of(context);
-                      messenger.clearSnackBars();
+                      messenger.hideCurrentSnackBar();
                       messenger.showSnackBar(
                         const SnackBar(
                           content: Text('זמני ההפסקות עודכנו'),
@@ -300,7 +321,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
             job.name,
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          subtitle: Text("₪${job.hourlyRate.toStringAsFixed(2)} לשעה"),
+          subtitle: Text("${UIUtils.formatCurrency(job.hourlyRate)} לשעה"),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -313,11 +334,23 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                   Icons.delete_outline_rounded,
                   color: Colors.red,
                 ),
-                onPressed: () {
+                onPressed: () async {
                   final provider = context.read<ShiftProvider>();
                   final name = job.name;
+
+                  final confirmed = await UIUtils.showConfirmDialog(
+                    context: context,
+                    title: 'מחיקת תפקיד',
+                    content: 'האם אתה בטוח שברצונך למחוק את התפקיד "$name"?',
+                    isDestructive: true,
+                    confirmLabel: 'מחק',
+                  );
+
+                  if (confirmed != true) return;
+
                   provider.deleteJobType(job.id);
 
+                  if (!mounted) return;
                   final messenger = ScaffoldMessenger.of(context);
                   messenger.hideCurrentSnackBar();
                   messenger.showSnackBar(

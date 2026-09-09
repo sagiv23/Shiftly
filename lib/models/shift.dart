@@ -30,6 +30,9 @@ class Shift extends HiveObject {
   @HiveField(8)
   double? unpaidBreakMinutes;
 
+  @HiveField(9)
+  List<double>? individualTips;
+
   Shift({
     required this.id,
     required this.date,
@@ -39,6 +42,7 @@ class Shift extends HiveObject {
     this.tips = 0.0,
     this.breakType = BreakType.none,
     this.unpaidBreakMinutes = 45.0,
+    this.individualTips,
   });
 
   double get durationHours {

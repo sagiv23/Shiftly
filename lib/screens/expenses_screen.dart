@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/models/expense.dart';
 import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/utils/ui_utils.dart';
 import 'package:uuid/uuid.dart';
 
 class ExpensesScreen extends StatelessWidget {
@@ -70,7 +71,7 @@ class ExpensesScreen extends StatelessWidget {
               child: const Text('ביטול'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final desc = descriptionController.text.trim();
                 final amount = double.tryParse(amountController.text) ?? 0.0;
                 final messenger = ScaffoldMessenger.of(context);
@@ -96,6 +97,15 @@ class ExpensesScreen extends StatelessWidget {
                   return;
                 }
 
+                final confirmed = await UIUtils.showConfirmDialog(
+                  context: context,
+                  title: expense == null ? 'הוספת הוצאה' : 'עדכון הוצאה',
+                  content:
+                      'האם לשמור את ההוצאה "$desc" בסך ${UIUtils.formatCurrency(amount)}?',
+                );
+
+                if (confirmed != true) return;
+
                 final provider = context.read<ShiftProvider>();
                 if (expense == null) {
                   provider.addExpense(
@@ -112,7 +122,7 @@ class ExpensesScreen extends StatelessWidget {
                   expense.date = selectedDate;
                   provider.updateExpense(expense);
                 }
-                Navigator.pop(ctx);
+                if (ctx.mounted) Navigator.pop(ctx);
               },
               child: const Text('שמור'),
             ),
@@ -211,7 +221,7 @@ class _MonthExpenseSection extends StatelessWidget {
                 ),
               ),
               Text(
-                'סה"כ: ₪${totalMonthExpenses.toStringAsFixed(2)}',
+                'סה"כ: ${UIUtils.formatCurrency(totalMonthExpenses)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Colors.redAccent,
@@ -251,6 +261,16 @@ class _ExpenseTile extends StatelessWidget {
         padding: const EdgeInsets.only(right: 24),
         child: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade700),
       ),
+      confirmDismiss: (direction) async {
+        return await UIUtils.showConfirmDialog(
+          context: context,
+          title: 'מחיקת הוצאה',
+          content:
+              'האם אתה בטוח שברצונך למחוק את ההוצאה "${expense.description}" בסך ${UIUtils.formatCurrency(expense.amount)}?',
+          isDestructive: true,
+          confirmLabel: 'מחק',
+        );
+      },
       onDismissed: (_) {
         shiftProvider.deleteExpense(expense.id);
         final messenger = ScaffoldMessenger.of(context);
@@ -290,7 +310,7 @@ class _ExpenseTile extends StatelessWidget {
           ),
           subtitle: Text(DateFormat('dd/MM/yyyy').format(expense.date)),
           trailing: Text(
-            '₪${expense.amount.toStringAsFixed(2)}',
+            UIUtils.formatCurrency(expense.amount),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,

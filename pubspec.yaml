@@ -41,8 +41,8 @@ dependencies:
   uuid: ^4.4.0
   collection: ^1.18.0
   table_calendar: ^3.1.2
-  flutter_local_notifications: ^17.2.2
-  timezone: ^0.9.4
+  flutter_local_notifications: ^22.3.0
+  timezone: ^0.11.1
 
 dependency_overrides:
   path_provider_android: 2.2.5
@@ -53,7 +53,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.9
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 flutter_launcher_icons:
   android: "launcher_icon"

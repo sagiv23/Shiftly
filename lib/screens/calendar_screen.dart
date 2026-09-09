@@ -6,6 +6,7 @@ import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/screens/add_shift_screen.dart';
+import 'package:shiftly/utils/ui_utils.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -262,6 +263,16 @@ class _CalendarShiftTile extends StatelessWidget {
         padding: const EdgeInsets.only(right: 24),
         child: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade700),
       ),
+      confirmDismiss: (direction) async {
+        final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
+        return await UIUtils.showConfirmDialog(
+          context: context,
+          title: 'מחיקת משמרת',
+          content: 'האם אתה בטוח שברצונך למחוק את המשמרת מיום $dateStr?',
+          isDestructive: true,
+          confirmLabel: 'מחק',
+        );
+      },
       onDismissed: (_) {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         shiftProvider.deleteShift(shift.id);
@@ -330,11 +341,15 @@ class _CalendarShiftTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                "₪${pay.toStringAsFixed(2)}",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.primary,
+                UIUtils.formatCurrency(pay),
+                style: UIUtils.getCurrencyStyle(
+                  context,
+                  pay,
+                  positiveColor: Theme.of(context).colorScheme.primary,
+                  baseStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               if (shift.tips > 0)
@@ -348,7 +363,7 @@ class _CalendarShiftTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    "+₪${shift.tips.toStringAsFixed(2)}",
+                    "+${UIUtils.formatCurrency(shift.tips)}",
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.green.shade700,

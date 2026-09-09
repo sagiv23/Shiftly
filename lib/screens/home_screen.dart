@@ -11,6 +11,7 @@ import 'package:shiftly/screens/calendar_screen.dart';
 import 'package:shiftly/screens/expenses_screen.dart';
 import 'package:shiftly/screens/job_types_screen.dart';
 import 'package:shiftly/screens/settings_screen.dart';
+import 'package:shiftly/utils/ui_utils.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -246,7 +247,7 @@ class _ActiveTimerBanner extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'זמן: $timeStr | ₪${pay.toStringAsFixed(2)}',
+                    'זמן: $timeStr | ${UIUtils.formatCurrency(pay)}',
                     style: TextStyle(
                       color: timer.isOnBreak
                           ? Colors.orange.shade800
@@ -320,9 +321,13 @@ class _GrandTotalCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "₪${(totalBase + totalTips - totalExpenses).toStringAsFixed(2)}",
+              UIUtils.formatCurrency(totalBase + totalTips - totalExpenses),
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onPrimary,
+                color: (totalBase + totalTips - totalExpenses) < 0
+                    ? Colors
+                          .red
+                          .shade200 // Lighter red on dark background
+                    : Theme.of(context).colorScheme.onPrimary,
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
               ),
@@ -344,17 +349,20 @@ class _GrandTotalCard extends StatelessWidget {
                   _VerticalDivider(),
                   _HeaderInfoItem(
                     label: 'בסיס',
-                    value: "₪${totalBase.toStringAsFixed(2)}",
+                    value: UIUtils.formatCurrency(totalBase),
+                    amount: totalBase,
                   ),
                   _VerticalDivider(),
                   _HeaderInfoItem(
                     label: 'טיפים',
-                    value: "₪${totalTips.toStringAsFixed(2)}",
+                    value: UIUtils.formatCurrency(totalTips),
+                    amount: totalTips,
                   ),
                   _VerticalDivider(),
                   _HeaderInfoItem(
                     label: 'הוצאות',
-                    value: "₪${totalExpenses.toStringAsFixed(2)}",
+                    value: UIUtils.formatCurrency(totalExpenses),
+                    amount: -totalExpenses, // Treat as negative for color
                   ),
                 ],
               ),
@@ -369,8 +377,13 @@ class _GrandTotalCard extends StatelessWidget {
 class _HeaderInfoItem extends StatelessWidget {
   final String label;
   final String value;
+  final double? amount;
 
-  const _HeaderInfoItem({required this.label, required this.value});
+  const _HeaderInfoItem({
+    required this.label,
+    required this.value,
+    this.amount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +402,9 @@ class _HeaderInfoItem extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
+            color: (amount ?? 0) < 0
+                ? Colors.red.shade200
+                : Theme.of(context).colorScheme.onPrimary,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -489,7 +504,7 @@ class _MonthExpansionSection extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            "₪${(totalBaseSalary + totalTips - totalMonthExpenses).toStringAsFixed(2)} סה\"כ נטו | ${totalNetHours.toStringAsFixed(2)} שעות",
+            "${UIUtils.formatCurrency(totalBaseSalary + totalTips - totalMonthExpenses)} סה\"כ נטו | ${totalNetHours.toStringAsFixed(2)} שעות",
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -505,24 +520,29 @@ class _MonthExpansionSection extends StatelessWidget {
                   children: [
                     _SummaryItem(
                       label: 'בסיס',
-                      value: "₪${totalBaseSalary.toStringAsFixed(2)}",
+                      value: UIUtils.formatCurrency(totalBaseSalary),
+                      amount: totalBaseSalary,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
                       label: 'טיפים',
-                      value: "₪${totalTips.toStringAsFixed(2)}",
+                      value: UIUtils.formatCurrency(totalTips),
+                      amount: totalTips,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
                       label: 'הוצאות',
-                      value: "₪${totalMonthExpenses.toStringAsFixed(2)}",
+                      value: UIUtils.formatCurrency(totalMonthExpenses),
+                      amount: -totalMonthExpenses,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
                       label: 'נטו',
-                      value:
-                          "₪${(totalBaseSalary + totalTips - totalMonthExpenses).toStringAsFixed(2)}",
+                      value: UIUtils.formatCurrency(
+                        totalBaseSalary + totalTips - totalMonthExpenses,
+                      ),
                       isBold: true,
+                      amount: totalBaseSalary + totalTips - totalMonthExpenses,
                     ),
                   ],
                 ),
@@ -541,15 +561,21 @@ class _SummaryItem extends StatelessWidget {
   final String label;
   final String value;
   final bool isBold;
+  final double? amount;
 
   const _SummaryItem({
     required this.label,
     required this.value,
     this.isBold = false,
+    this.amount,
   });
 
   @override
   Widget build(BuildContext context) {
+    final textColor = (amount ?? 0) < 0
+        ? Colors.red
+        : (isBold ? Theme.of(context).colorScheme.primary : null);
+
     return Column(
       children: [
         Text(
@@ -564,7 +590,7 @@ class _SummaryItem extends StatelessWidget {
           style: TextStyle(
             fontSize: isBold ? 18 : 16,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: isBold ? Theme.of(context).colorScheme.primary : null,
+            color: textColor,
           ),
         ),
       ],
@@ -607,6 +633,16 @@ class _ShiftTile extends StatelessWidget {
         padding: const EdgeInsets.only(right: 24),
         child: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade700),
       ),
+      confirmDismiss: (direction) async {
+        final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
+        return await UIUtils.showConfirmDialog(
+          context: context,
+          title: 'מחיקת משמרת',
+          content: 'האם אתה בטוח שברצונך למחוק את המשמרת מיום $dateStr?',
+          isDestructive: true,
+          confirmLabel: 'מחק',
+        );
+      },
       onDismissed: (_) {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         shiftProvider.deleteShift(shift.id);
@@ -693,11 +729,15 @@ class _ShiftTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                "₪${pay.toStringAsFixed(2)}",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.primary,
+                UIUtils.formatCurrency(pay),
+                style: UIUtils.getCurrencyStyle(
+                  context,
+                  pay,
+                  positiveColor: Theme.of(context).colorScheme.primary,
+                  baseStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               if (shift.tips > 0)
@@ -713,7 +753,7 @@ class _ShiftTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      "+₪${shift.tips.toStringAsFixed(2)} טיפ",
+                      "+${UIUtils.formatCurrency(shift.tips)} טיפ",
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.green.shade700,

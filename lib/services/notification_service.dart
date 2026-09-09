@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/foundation.dart'
     show debugPrint, defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
@@ -27,9 +25,11 @@ class NotificationService {
       if (!_isSupported) return;
 
       // Initialize timezones
-      tz.initializeTimeZones();
-
-      // Let the system handle local time naturally for battery efficiency
+      try {
+        tz.initializeTimeZones();
+      } catch (e) {
+        debugPrint('Timezone data init error: $e');
+      }
 
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/launcher_icon');
@@ -53,30 +53,34 @@ class NotificationService {
           );
 
       await _notificationsPlugin.initialize(
-        initializationSettings,
+        settings: initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse details) {
-          if (details.actionId != null) {
-            onActionReceived?.call(details.actionId!);
+          try {
+            if (details.actionId != null) {
+              onActionReceived?.call(details.actionId!);
 
-            if (details.actionId == 'stop_shift') {
+              if (details.actionId == 'stop_shift') {
+                navigatorKey.currentState?.push(
+                  MaterialPageRoute(
+                    builder: (_) => const AddShiftScreen(initialTabIndex: 0),
+                  ),
+                );
+              }
+            } else {
               navigatorKey.currentState?.push(
                 MaterialPageRoute(
                   builder: (_) => const AddShiftScreen(initialTabIndex: 0),
                 ),
               );
             }
-          } else {
-            navigatorKey.currentState?.push(
-              MaterialPageRoute(
-                builder: (_) => const AddShiftScreen(initialTabIndex: 0),
-              ),
-            );
+          } catch (e) {
+            debugPrint('Error handling notification response: $e');
           }
         },
       );
 
       // Simple permission request for battery efficiency
-      if (!kIsWeb && Platform.isAndroid) {
+      if (defaultTargetPlatform == TargetPlatform.android) {
         final androidPlugin = _notificationsPlugin
             .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin
@@ -85,7 +89,7 @@ class NotificationService {
         await androidPlugin?.requestNotificationsPermission();
       }
     } catch (e) {
-      debugPrint('Error initializing NotificationService: $e');
+      debugPrint('Error in NotificationService.init: $e');
     }
   }
 
@@ -135,15 +139,12 @@ class NotificationService {
         : '${(reminderDurationHours * 60).toInt()} דקות';
 
     await _notificationsPlugin.zonedSchedule(
-      id,
-      'תזכורת למשמרת',
-      'המשמרת שלך ($shiftName) מתחילה בעוד $timeText!',
-      tz.TZDateTime.from(reminderTime, tz.local),
-      notificationDetails,
+      id: id,
+      title: 'תזכורת למשמרת',
+      body: 'המשמרת שלך ($shiftName) מתחילה בעוד $timeText!',
+      scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
+      notificationDetails: notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      // Battery friendly
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
 
     debugPrint('Scheduled reminder for $shiftName at $reminderTime');
@@ -223,16 +224,16 @@ class NotificationService {
     );
 
     await _notificationsPlugin.show(
-      id,
-      title,
-      body,
-      platformChannelSpecifics,
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: platformChannelSpecifics,
       payload: 'timer_action',
     );
   }
 
   static Future<void> cancelNotification(int id) async {
     if (!_isSupported) return;
-    await _notificationsPlugin.cancel(id);
+    await _notificationsPlugin.cancel(id: id);
   }
 }

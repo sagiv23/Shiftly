@@ -4,6 +4,7 @@ import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/screens/home_screen.dart';
+import 'package:shiftly/utils/ui_utils.dart';
 import 'package:shiftly/widgets/app_icon.dart';
 import 'package:uuid/uuid.dart';
 
@@ -313,7 +314,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      '₪${job.hourlyRate.toStringAsFixed(2)} לשעה',
+                      '${UIUtils.formatCurrency(job.hourlyRate)} לשעה',
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -327,11 +328,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             Icons.delete_outline,
                             color: Colors.red,
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             final provider = context.read<ShiftProvider>();
                             final name = job.name;
+
+                            final confirmed = await UIUtils.showConfirmDialog(
+                              context: context,
+                              title: 'מחיקת תפקיד',
+                              content:
+                                  'האם אתה בטוח שברצונך למחוק את התפקיד "$name"?',
+                              isDestructive: true,
+                              confirmLabel: 'מחק',
+                            );
+
+                            if (confirmed != true) return;
+
                             provider.deleteJobType(job.id);
 
+                            if (!mounted) return;
                             final messenger = ScaffoldMessenger.of(context);
                             messenger.clearSnackBars();
                             messenger.showSnackBar(
@@ -394,13 +408,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: const Text('ביטול'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final name = nameController.text.trim();
               final rate =
                   double.tryParse(rateController.text) ?? job.hourlyRate;
-              context.read<ShiftProvider>().updateJobType(
-                job.copyWith(name: nameController.text, hourlyRate: rate),
+
+              if (name.isEmpty) return;
+
+              final confirmed = await UIUtils.showConfirmDialog(
+                context: context,
+                title: 'עדכון תפקיד',
+                content:
+                    'האם לעדכן את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)}?',
               );
-              Navigator.pop(context);
+
+              if (confirmed != true) return;
+
+              if (mounted) {
+                context.read<ShiftProvider>().updateJobType(
+                  job.copyWith(name: name, hourlyRate: rate),
+                );
+                Navigator.pop(context);
+              }
             },
             child: const Text('שמור'),
           ),
@@ -437,14 +466,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: const Text('ביטול'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = nameController.text.trim();
               final rate = double.tryParse(rateController.text) ?? 0.0;
               final provider = context.read<ShiftProvider>();
               final messenger = ScaffoldMessenger.of(context);
 
               if (name.isEmpty) {
-                messenger.clearSnackBars();
+                messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text('נא להזין שם לתפקיד'),
@@ -459,7 +488,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               );
 
               if (exists) {
-                messenger.clearSnackBars();
+                messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text('תפקיד בשם זה כבר קיים'),
@@ -470,7 +499,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               }
 
               if (rate < 0) {
-                messenger.clearSnackBars();
+                messenger.hideCurrentSnackBar();
                 messenger.showSnackBar(
                   const SnackBar(
                     content: Text('השכר לא יכול להיות שלילי'),
@@ -479,10 +508,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 );
                 return;
               }
+
+              final confirmed = await UIUtils.showConfirmDialog(
+                context: context,
+                title: 'הוספת תפקיד',
+                content:
+                    'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)}?',
+              );
+
+              if (confirmed != true) return;
+
               provider.addJobType(
                 JobType(id: const Uuid().v4(), name: name, hourlyRate: rate),
               );
-              Navigator.pop(context);
+              if (mounted) Navigator.pop(context);
             },
             child: const Text('הוסף'),
           ),

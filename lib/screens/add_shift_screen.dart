@@ -8,6 +8,7 @@ import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/providers/timer_provider.dart';
 import 'package:shiftly/services/shift_parser.dart';
+import 'package:shiftly/utils/ui_utils.dart';
 import 'package:uuid/uuid.dart';
 
 class AddShiftScreen extends StatefulWidget {
@@ -29,14 +30,14 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   String? _selectedJobTypeId;
-  late TextEditingController _tipsController;
+  final List<TextEditingController> _tipControllers = [];
   late BreakType _selectedBreakType;
 
   // Raw Paste State
   final TextEditingController _rawTextController = TextEditingController();
 
   // Timer State
-  final TextEditingController _timerTipsController = TextEditingController();
+  final List<TextEditingController> _timerTipControllers = [];
 
   @override
   void initState() {
@@ -53,9 +54,20 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       _startTime = TimeOfDay.fromDateTime(s.startTime);
       _endTime = TimeOfDay.fromDateTime(s.endTime);
       _selectedJobTypeId = s.jobTypeId;
-      _tipsController = TextEditingController(text: s.tips.toString());
       _selectedBreakType = s.breakType ?? BreakType.none;
+
+      // Initialize tips for editing
+      if (s.tips > 0) {
+        _tipControllers.add(
+          TextEditingController(text: s.tips.toStringAsFixed(0)),
+        );
+      } else {
+        _tipControllers.add(TextEditingController(text: '0'));
+      }
     } else {
+      _tipControllers.add(TextEditingController(text: '0'));
+      _timerTipControllers.add(TextEditingController(text: '0'));
+
       final timer = context.read<TimerProvider>();
       final isFromTimerReview = timer.startTime != null && !timer.isRunning;
 
@@ -66,18 +78,22 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           timer.reviewEndTime ?? DateTime.now(),
         );
         _selectedJobTypeId = timer.jobTypeId;
-        _tipsController = TextEditingController(
-          text: timer.tips.toStringAsFixed(0),
-        );
         _selectedBreakType = timer.accumulatedUnpaidMinutes > 0
             ? BreakType.unpaid
             : BreakType.none;
-        _timerTipsController.text = timer.tips.toStringAsFixed(0);
+
+        _tipControllers.clear();
+        _tipControllers.add(
+          TextEditingController(text: timer.tips.toStringAsFixed(0)),
+        );
+        _timerTipControllers.clear();
+        _timerTipControllers.add(
+          TextEditingController(text: timer.tips.toStringAsFixed(0)),
+        );
       } else {
         _selectedDate = DateTime.now();
         _startTime = const TimeOfDay(hour: 9, minute: 0);
         _endTime = const TimeOfDay(hour: 17, minute: 0);
-        _tipsController = TextEditingController(text: '0');
         _selectedBreakType = BreakType.none;
 
         final jobs = context.read<ShiftProvider>().jobTypes;
@@ -92,19 +108,45 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         // Initialize timer tab values if timer is running
         if (timer.isRunning) {
           _selectedJobTypeId = timer.jobTypeId ?? _selectedJobTypeId;
-          _timerTipsController.text = timer.tips.toStringAsFixed(0);
+          _timerTipControllers.clear();
+          _timerTipControllers.add(
+            TextEditingController(text: timer.tips.toStringAsFixed(0)),
+          );
         }
       }
     }
   }
 
-  void _finishTimerShift() {
+  double _calculateTotalTips(List<TextEditingController> controllers) {
+    return controllers.fold(
+      0.0,
+      (sum, c) => sum + (double.tryParse(c.text) ?? 0.0),
+    );
+  }
+
+  List<double> _getTipList(List<TextEditingController> controllers) {
+    return controllers
+        .map((c) => double.tryParse(c.text) ?? 0.0)
+        .where((t) => t > 0)
+        .toList();
+  }
+
+  void _finishTimerShift() async {
     final timerProvider = context.read<TimerProvider>();
     final shiftProvider = context.read<ShiftProvider>();
 
     if (timerProvider.startTime == null || timerProvider.jobTypeId == null) {
       return;
     }
+
+    final totalTips = _calculateTotalTips(_timerTipControllers);
+    final confirmed = await UIUtils.showConfirmDialog(
+      context: context,
+      title: 'סיום משמרת',
+      content:
+          'האם אתה בטוח שברצונך לשמור את המשמרת עם טיפים בסך ${UIUtils.formatCurrency(totalTips)}?',
+    );
+    if (!confirmed) return;
 
     final end = timerProvider.isRunning
         ? DateTime.now()
@@ -116,7 +158,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       startTime: timerProvider.startTime!,
       endTime: end,
       jobTypeId: timerProvider.jobTypeId!,
-      tips: timerProvider.tips,
+      tips: totalTips,
+      individualTips: _getTipList(_timerTipControllers),
       breakType: timerProvider.accumulatedUnpaidMinutes > 0
           ? BreakType.unpaid
           : BreakType.none,
@@ -126,8 +169,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     shiftProvider.addShift(shift);
     timerProvider.resetTimer();
 
+    if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
+    messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       const SnackBar(
         content: Text('המשמרת נשמרה בהצלחה'),
@@ -138,7 +182,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     Navigator.pop(context);
   }
 
-  void _saveManual() {
+  void _saveManual() async {
     if (_selectedJobTypeId == null) return;
 
     final start = DateTime(
@@ -162,6 +206,15 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     final dateStr = DateFormat('dd/MM/yyyy').format(_selectedDate);
     final settings = context.read<SettingsProvider>();
+    final totalTips = _calculateTotalTips(_tipControllers);
+
+    final confirmed = await UIUtils.showConfirmDialog(
+      context: context,
+      title: widget.shiftToEdit != null ? 'עדכון משמרת' : 'שמירת משמרת',
+      content:
+          'האם לשמור את פרטי המשמרת מיום $dateStr עם טיפים בסך ${UIUtils.formatCurrency(totalTips)}?',
+    );
+    if (!confirmed) return;
 
     if (widget.shiftToEdit != null) {
       final s = widget.shiftToEdit!;
@@ -169,13 +222,14 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.startTime = start;
       s.endTime = end;
       s.jobTypeId = _selectedJobTypeId!;
-      s.tips = double.tryParse(_tipsController.text) ?? 0;
+      s.tips = totalTips;
+      s.individualTips = _getTipList(_tipControllers);
       s.breakType = _selectedBreakType;
       s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
       context.read<ShiftProvider>().updateShift(s);
 
       final messenger = ScaffoldMessenger.of(context);
-      messenger.clearSnackBars();
+      messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
         SnackBar(
           content: Text('משמרת מיום $dateStr עודכנה בהצלחה'),
@@ -190,14 +244,15 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         startTime: start,
         endTime: end,
         jobTypeId: _selectedJobTypeId!,
-        tips: double.tryParse(_tipsController.text) ?? 0,
+        tips: totalTips,
+        individualTips: _getTipList(_tipControllers),
         breakType: _selectedBreakType,
         unpaidBreakMinutes: settings.unpaidBreakDurationMinutes,
       );
       context.read<ShiftProvider>().addShift(shift);
 
       final messenger = ScaffoldMessenger.of(context);
-      messenger.clearSnackBars();
+      messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
         SnackBar(
           content: Text('משמרת מיום $dateStr נשמרה בהצלחה'),
@@ -206,19 +261,26 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         ),
       );
     }
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
-  void _saveRaw() {
+  void _saveRaw() async {
     if (_selectedJobTypeId == null) return;
     final settings = context.read<SettingsProvider>();
 
     final lines = _rawTextController.text.split('\n');
+    final validLines = lines.where((l) => l.trim().isNotEmpty).toList();
+    if (validLines.isEmpty) return;
+
+    final confirmed = await UIUtils.showConfirmDialog(
+      context: context,
+      title: 'פענוח משמרות',
+      content: 'האם לפענח ולשמור ${validLines.length} משמרות מהטקסט שהודבק?',
+    );
+    if (!confirmed) return;
+
     int addedCount = 0;
-
-    for (var line in lines) {
-      if (line.trim().isEmpty) continue;
-
+    for (var line in validLines) {
       final shift = ShiftParser.parse(
         line,
         _selectedJobTypeId!,
@@ -328,7 +390,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   return;
                 }
                 timerProvider.startShift(_selectedJobTypeId!);
-                _timerTipsController.text = '0';
+                for (var c in _timerTipControllers) {
+                  c.text = '0';
+                }
               } else {
                 if (isOnBreak) {
                   timerProvider.endBreak();
@@ -424,11 +488,15 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           const SizedBox(height: 8),
           // Live Pay Display
           Text(
-            '₪${timerProvider.calculateLivePay(job?.hourlyRate ?? 40.22).toStringAsFixed(2)} נצבר',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
+            '${UIUtils.formatCurrency(timerProvider.calculateLivePay(job?.hourlyRate ?? 40.22))} נצבר',
+            style: UIUtils.getCurrencyStyle(
+              context,
+              timerProvider.calculateLivePay(job?.hourlyRate ?? 40.22),
+              positiveColor: Theme.of(context).colorScheme.primary,
+              baseStyle: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -493,21 +561,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                       }
                     },
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _timerTipsController,
-                    decoration: const InputDecoration(
-                      labelText: 'טיפים (₪)',
-                      prefixIcon: Icon(Icons.monetization_on_rounded),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (val) {
-                      final d = double.tryParse(val) ?? 0.0;
-                      if (isRunning || isReviewMode) {
-                        timerProvider.setTips(d);
-                      }
-                    },
-                  ),
+                  const SizedBox(height: 24),
+                  _buildTipsSection(_timerTipControllers),
                 ],
               ),
             ),
@@ -811,19 +866,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 .toList(),
             onChanged: (val) => setState(() => _selectedJobTypeId = val),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _tipsController,
-            decoration: InputDecoration(
-              labelText: 'טיפים (₪)',
-              prefixIcon: const Icon(Icons.monetization_on_rounded),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.backspace_rounded, size: 20),
-                onPressed: () => _tipsController.text = '0',
-              ),
-            ),
-            keyboardType: TextInputType.number,
-          ),
+          const SizedBox(height: 24),
+          _buildTipsSection(_tipControllers),
           const SizedBox(height: 40),
           ElevatedButton.icon(
             onPressed: _saveManual,
@@ -932,6 +976,75 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTipsSection(List<TextEditingController> controllers) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'טיפים (₪)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            Text(
+              'סה"כ: ${UIUtils.formatCurrency(_calculateTotalTips(controllers))}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...controllers.asMap().entries.map((entry) {
+          int idx = entry.key;
+          var controller = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      hintText: 'הזן סכום טיפ',
+                      prefixIcon: Icon(Icons.monetization_on_rounded, size: 20),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (controllers.length > 1)
+                  IconButton(
+                    icon: const Icon(
+                      Icons.remove_circle_outline,
+                      color: Colors.red,
+                    ),
+                    onPressed: () => setState(() {
+                      controllers.removeAt(idx);
+                    }),
+                  ),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () => setState(() {
+            controllers.add(TextEditingController(text: '0'));
+          }),
+          icon: const Icon(Icons.add_circle_outline),
+          label: const Text('הוסף טיפ נוסף'),
+        ),
+      ],
     );
   }
 }
