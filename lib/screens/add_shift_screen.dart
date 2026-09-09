@@ -214,7 +214,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       content:
           'האם לשמור את פרטי המשמרת מיום $dateStr עם טיפים בסך ${UIUtils.formatCurrency(totalTips)}?',
     );
-    if (!confirmed) return;
+    if (confirmed != true) return;
+
+    if (!context.mounted) return;
 
     if (widget.shiftToEdit != null) {
       final s = widget.shiftToEdit!;
@@ -226,6 +228,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.individualTips = _getTipList(_tipControllers);
       s.breakType = _selectedBreakType;
       s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
+      if (!context.mounted) return;
       context.read<ShiftProvider>().updateShift(s);
 
       final messenger = ScaffoldMessenger.of(context);
@@ -249,6 +252,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         breakType: _selectedBreakType,
         unpaidBreakMinutes: settings.unpaidBreakDurationMinutes,
       );
+      if (!context.mounted) return;
       context.read<ShiftProvider>().addShift(shift);
 
       final messenger = ScaffoldMessenger.of(context);
@@ -261,7 +265,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         ),
       );
     }
-    if (mounted) Navigator.pop(context);
+    if (context.mounted) Navigator.pop(context);
   }
 
   void _saveRaw() async {
@@ -288,14 +292,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         unpaidMinutes: settings.unpaidBreakDurationMinutes,
       );
       if (shift != null) {
+        if (!context.mounted) continue;
         context.read<ShiftProvider>().addShift(shift);
         addedCount++;
       }
     }
 
     if (addedCount > 0) {
+      if (!context.mounted) return;
       Navigator.pop(context);
     } else {
+      if (!context.mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       messenger.clearSnackBars();
       messenger.showSnackBar(
@@ -537,7 +544,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               child: Column(
                 children: [
                   DropdownButtonFormField<String>(
-                    value: (isRunning || isReviewMode)
+                    initialValue: (isRunning || isReviewMode)
                         ? timerProvider.jobTypeId
                         : _selectedJobTypeId,
                     decoration: const InputDecoration(
@@ -851,7 +858,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
           const SizedBox(height: 24),
           DropdownButtonFormField<String>(
-            value: _selectedJobTypeId,
+            initialValue: _selectedJobTypeId,
             decoration: const InputDecoration(
               labelText: 'סוג עבודה',
               prefixIcon: Icon(Icons.work_rounded),
@@ -896,7 +903,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       child: Column(
         children: [
           DropdownButtonFormField<String>(
-            value: _selectedJobTypeId,
+            initialValue: _selectedJobTypeId,
             decoration: const InputDecoration(
               labelText: 'סוג עבודה ברירת מחדל להדבקה',
               prefixIcon: Icon(Icons.work_history_rounded),

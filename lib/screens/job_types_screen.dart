@@ -116,6 +116,8 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
 
               if (confirmed != true) return;
 
+              if (!context.mounted) return;
+
               if (job == null) {
                 provider.addJobType(
                   JobType(id: const Uuid().v4(), name: name, hourlyRate: rate),
@@ -125,7 +127,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                 job.hourlyRate = rate;
                 provider.updateJobType(job);
               }
-              if (mounted) Navigator.pop(ctx);
+              Navigator.pop(ctx);
             },
             child: const Text('שמור'),
           ),
@@ -177,9 +179,8 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                     value: settings.shiftRemindersEnabled,
                     onChanged: (val) async {
                       await settings.setShiftRemindersEnabled(val);
-                      if (mounted) {
-                        context.read<ShiftProvider>().refreshAllReminders();
-                      }
+                      if (!context.mounted) return;
+                      context.read<ShiftProvider>().refreshAllReminders();
                     },
                   ),
                   if (settings.shiftRemindersEnabled) ...[
@@ -207,9 +208,8 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                       divisions: 47,
                       onChanged: (val) async {
                         await settings.setShiftReminderDurationHours(val);
-                        if (mounted) {
-                          context.read<ShiftProvider>().refreshAllReminders();
-                        }
+                        if (!context.mounted) return;
+                        context.read<ShiftProvider>().refreshAllReminders();
                       },
                     ),
                   ],
@@ -259,9 +259,10 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
 
                       if (confirmed != true) return;
 
+                      if (!context.mounted) return;
+
                       settings.setBreakDurations(paid, unpaid);
 
-                      if (!mounted) return;
                       final messenger = ScaffoldMessenger.of(context);
                       messenger.hideCurrentSnackBar();
                       messenger.showSnackBar(
@@ -348,9 +349,10 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
 
                   if (confirmed != true) return;
 
+                  if (!context.mounted) return;
+
                   provider.deleteJobType(job.id);
 
-                  if (!mounted) return;
                   final messenger = ScaffoldMessenger.of(context);
                   messenger.hideCurrentSnackBar();
                   messenger.showSnackBar(

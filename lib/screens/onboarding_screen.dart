@@ -343,9 +343,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                             if (confirmed != true) return;
 
+                            if (!context.mounted) return;
+
                             provider.deleteJobType(job.id);
 
-                            if (!mounted) return;
                             final messenger = ScaffoldMessenger.of(context);
                             messenger.clearSnackBars();
                             messenger.showSnackBar(
@@ -424,12 +425,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
               if (confirmed != true) return;
 
-              if (mounted) {
-                context.read<ShiftProvider>().updateJobType(
-                  job.copyWith(name: name, hourlyRate: rate),
-                );
-                Navigator.pop(context);
-              }
+              if (!context.mounted) return;
+
+              context.read<ShiftProvider>().updateJobType(
+                job.copyWith(name: name, hourlyRate: rate),
+              );
+              Navigator.pop(context);
             },
             child: const Text('שמור'),
           ),
@@ -518,10 +519,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
               if (confirmed != true) return;
 
+              if (!context.mounted) return;
+
               provider.addJobType(
                 JobType(id: const Uuid().v4(), name: name, hourlyRate: rate),
               );
-              if (mounted) Navigator.pop(context);
+              Navigator.pop(context);
             },
             child: const Text('הוסף'),
           ),

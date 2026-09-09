@@ -7,6 +7,8 @@ import 'package:shiftly/utils/ui_utils.dart';
 import 'package:uuid/uuid.dart';
 
 class ExpensesScreen extends StatelessWidget {
+  const ExpensesScreen({super.key});
+
   void _showExpenseDialog(BuildContext context, [Expense? expense]) {
     final descriptionController = TextEditingController(
       text: expense?.description ?? '',
@@ -106,6 +108,8 @@ class ExpensesScreen extends StatelessWidget {
 
                 if (confirmed != true) return;
 
+                if (!context.mounted) return;
+
                 final provider = context.read<ShiftProvider>();
                 if (expense == null) {
                   provider.addExpense(
@@ -122,7 +126,7 @@ class ExpensesScreen extends StatelessWidget {
                   expense.date = selectedDate;
                   provider.updateExpense(expense);
                 }
-                if (ctx.mounted) Navigator.pop(ctx);
+                Navigator.pop(ctx);
               },
               child: const Text('שמור'),
             ),

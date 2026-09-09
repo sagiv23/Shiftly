@@ -64,9 +64,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: settings.shiftRemindersEnabled,
               onChanged: (val) async {
                 await settings.setShiftRemindersEnabled(val);
-                if (mounted) {
-                  context.read<ShiftProvider>().refreshAllReminders();
-                }
+                if (!context.mounted) return;
+                context.read<ShiftProvider>().refreshAllReminders();
               },
             ),
           ),

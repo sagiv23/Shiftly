@@ -46,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  _navigateToHome() async {
+  Future<void> _navigateToHome() async {
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
@@ -55,6 +55,7 @@ class _SplashScreenState extends State<SplashScreen>
         ? const HomeScreen()
         : const OnboardingScreen();
 
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
