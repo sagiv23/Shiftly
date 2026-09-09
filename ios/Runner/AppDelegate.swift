@@ -9,7 +9,7 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     if #available(iOS 10.0, *) {
-      UNUserNotificationCenter.current().delegate = self as? UNNotificationCenterDelegate
+      UNUserNotificationCenter.current().delegate = self
     }
 
     GeneratedPluginRegistrant.register(with: self)
