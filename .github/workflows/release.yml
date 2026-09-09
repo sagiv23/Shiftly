@@ -9,8 +9,58 @@ permissions:
   contents: write
 
 jobs:
-  build-windows-android-web:
-    name: Build Windows, Android & Web
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      - name: Build Android APK
+        run: flutter build apk --release --split-per-abi
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-assets
+          path: |
+            build/app/outputs/flutter-apk/app-*-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      - name: Build Web
+        run: flutter build web --release
+      - name: Archive Web
+        run: |
+          cd build/web
+          zip -r ../../web-release.zip .
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-assets
+          path: web-release.zip
+
+  build-windows:
+    name: Build Windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,91 +68,20 @@ jobs:
         with:
           channel: 'stable'
           cache: true
-
       - name: Install dependencies
         run: flutter pub get
-
       - name: Run build_runner
         run: flutter pub run build_runner build --delete-conflicting-outputs
-
-      - name: Disable Kotlin Incremental Compilation
-        run: echo "kotlin.incremental=false" >> android/gradle.properties
-
-      - name: Build Android APK
-        run: flutter build apk --release --split-per-abi
-
-      - name: Build Android App Bundle
-        run: flutter build appbundle --release
-
-      - name: Build Web
-        run: flutter build web --release
-
       - name: Build Windows
         run: flutter build windows --release
-
-      - name: Archive Web
-        shell: pwsh
-        run: Compress-Archive -Path build/web/* -DestinationPath build/web-release.zip
-
       - name: Archive Windows
         shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows-release.zip
-
-      - name: Prepare Assets
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path staging -Force
-          Copy-Item build/app/outputs/flutter-apk/app-*-release.apk staging/
-          Copy-Item build/app/outputs/bundle/release/app-release.aab staging/
-          Copy-Item build/web-release.zip staging/
-          Copy-Item build/windows-release.zip staging/
-
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath windows-release.zip
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: assets-windows-android-web
-          path: staging/*
-
-  build-macos-ios:
-    name: Build macOS & iOS
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Run build_runner
-        run: flutter pub run build_runner build --delete-conflicting-outputs
-
-      - name: Build macOS
-        run: flutter build macos --release
-
-      - name: Archive macOS
-        run: |
-          cd build/macos/Build/Products/Release
-          zip -r ../../../../Shiftly-macOS.zip Shiftly.app
-
-      - name: Build iOS (No Sign)
-        run: flutter build ios --release --no-codesign
-
-      - name: Create iOS Payload
-        run: |
-          mkdir Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -r Shiftly-iOS.ipa Payload
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: assets-macos-ios
-          path: |
-            Shiftly-macOS.zip
-            Shiftly-iOS.ipa
+          name: windows-assets
+          path: windows-release.zip
 
   build-linux:
     name: Build Linux
@@ -113,35 +92,80 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
-
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
-
       - name: Install dependencies
         run: flutter pub get
-
       - name: Run build_runner
         run: flutter pub run build_runner build --delete-conflicting-outputs
-
       - name: Build Linux
         run: flutter build linux --release
-
       - name: Archive Linux
         run: |
           cd build/linux/x64/release/bundle
-          zip -r ../../../../../Shiftly-Linux.zip *
-
+          zip -r ../../../../../linux-release.zip *
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: assets-linux
-          path: Shiftly-Linux.zip
+          name: linux-assets
+          path: linux-release.zip
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      - name: Build macOS
+        run: flutter build macos --release
+      - name: Archive macOS
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r ../../../../macos-release.zip Shiftly.app
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-assets
+          path: macos-release.zip
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run build_runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      - name: Build iOS (No Sign)
+        run: flutter build ios --release --no-codesign
+      - name: Create iOS Payload
+        run: |
+          mkdir Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r ios-release.ipa Payload
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-assets
+          path: ios-release.ipa
 
   create-release:
     name: Create GitHub Release
-    needs: [ build-windows-android-web, build-macos-ios, build-linux ]
+    needs: [ build-android, build-web, build-windows, build-linux, build-macos, build-ios ]
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
@@ -170,8 +194,8 @@ jobs:
             release-assets/app-release.aab
             release-assets/web-release.zip
             release-assets/windows-release.zip
-            release-assets/Shiftly-iOS.ipa
-            release-assets/Shiftly-macOS.zip
-            release-assets/Shiftly-Linux.zip
+            release-assets/linux-release.zip
+            release-assets/macos-release.zip
+            release-assets/ios-release.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
