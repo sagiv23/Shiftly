@@ -23,7 +23,9 @@ jobs:
       - name: Run build_runner
         run: flutter pub run build_runner build --delete-conflicting-outputs
       - name: Build Android APK
-        run: flutter build apk --release --split-per-abi
+        run: |
+          flutter build apk --release --split-per-abi
+          flutter build apk --release
       - name: Build Android App Bundle
         run: flutter build appbundle --release
       - name: Upload Artifacts
@@ -31,8 +33,8 @@ jobs:
         with:
           name: android-assets
           path: |
-            build/app/outputs/flutter-apk/app-*-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/bundle/release/*.aab
 
   build-web:
     name: Build Web
@@ -183,15 +185,16 @@ jobs:
             <div dir="rtl">
 
             **הנחיות להתקנה:**
-            *   **Android:** מומלץ להוריד את קובץ ה-`app-arm64-v8a-release.apk` (מתאים לרוב המכשירים). קובץ ה-`aab` מיועד לחנות בלבד.
+            *   **Android (התקנה ידנית):** מומלץ להוריד את `app-release.apk` (גרסה אוניברסלית) או את `app-arm64-v8a-release.apk` (גרסה קלה למכשירים מודרניים).
+            *   **Google Play (למפתחים):** יש להשתמש בקובץ `app-release.aab`.
             *   **iOS/macOS:** האפליקציה תומכת בהתראות Foreground. ב-iOS יש להתקין באמצעות כלי פיתוח (כיוון שאין חתימה).
             *   **Desktop:** יש להוריד את קובץ ה-Zip המתאים, לחלץ ולהריץ את הקובץ המפעיל.
 
             </div>
 
           files: |
-            release-assets/app-*.apk
-            release-assets/app-release.aab
+            release-assets/*.apk
+            release-assets/*.aab
             release-assets/web-release.zip
             release-assets/windows-release.zip
             release-assets/linux-release.zip
