@@ -152,6 +152,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         ? DateTime.now()
         : (timerProvider.reviewEndTime ?? DateTime.now());
 
+    final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
+
     final shift = Shift(
       id: const Uuid().v4(),
       date: timerProvider.startTime!,
@@ -160,6 +162,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       jobTypeId: timerProvider.jobTypeId!,
       tips: totalTips,
       individualTips: _getTipList(_timerTipControllers),
+      hourlyRate: job?.getRateForDate(timerProvider.startTime!),
       breakType: timerProvider.accumulatedUnpaidMinutes > 0
           ? BreakType.unpaid
           : BreakType.none,
@@ -207,6 +210,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final dateStr = DateFormat('dd/MM/yyyy').format(_selectedDate);
     final settings = context.read<SettingsProvider>();
     final totalTips = _calculateTotalTips(_tipControllers);
+    final shiftProvider = context.read<ShiftProvider>();
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
@@ -218,6 +222,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     if (!context.mounted) return;
 
+    final job = shiftProvider.getJobTypeById(_selectedJobTypeId!);
+
     if (widget.shiftToEdit != null) {
       final s = widget.shiftToEdit!;
       s.date = _selectedDate;
@@ -226,10 +232,11 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.jobTypeId = _selectedJobTypeId!;
       s.tips = totalTips;
       s.individualTips = _getTipList(_tipControllers);
+      s.hourlyRate = job?.getRateForDate(_selectedDate);
       s.breakType = _selectedBreakType;
       s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
       if (!context.mounted) return;
-      context.read<ShiftProvider>().updateShift(s);
+      shiftProvider.updateShift(s);
 
       final messenger = ScaffoldMessenger.of(context);
       messenger.hideCurrentSnackBar();
@@ -249,11 +256,12 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         jobTypeId: _selectedJobTypeId!,
         tips: totalTips,
         individualTips: _getTipList(_tipControllers),
+        hourlyRate: job?.getRateForDate(_selectedDate),
         breakType: _selectedBreakType,
         unpaidBreakMinutes: settings.unpaidBreakDurationMinutes,
       );
       if (!context.mounted) return;
-      context.read<ShiftProvider>().addShift(shift);
+      shiftProvider.addShift(shift);
 
       final messenger = ScaffoldMessenger.of(context);
       messenger.hideCurrentSnackBar();

@@ -33,6 +33,9 @@ class Shift extends HiveObject {
   @HiveField(9)
   List<double>? individualTips;
 
+  @HiveField(10)
+  double? hourlyRate;
+
   Shift({
     required this.id,
     required this.date,
@@ -43,6 +46,7 @@ class Shift extends HiveObject {
     this.breakType = BreakType.none,
     this.unpaidBreakMinutes = 45.0,
     this.individualTips,
+    this.hourlyRate,
   });
 
   double get durationHours {
@@ -65,7 +69,7 @@ class Shift extends HiveObject {
     return net < 0 ? 0.0 : net;
   }
 
-  double calculateTotalPay(double hourlyRate) {
-    return (netHours * hourlyRate) + tips;
+  double calculateTotalPay(double currentHourlyRate) {
+    return (netHours * (hourlyRate ?? currentHourlyRate)) + tips;
   }
 }

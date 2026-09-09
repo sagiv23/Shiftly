@@ -32,106 +32,139 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
   void _showEditJobDialog(BuildContext context, [JobType? job]) {
     final nameController = TextEditingController(text: job?.name ?? '');
     final rateController = TextEditingController(
-      text: job?.hourlyRate.toString() ?? '40.22',
+      text: (job?.hourlyRate ?? 40.22).toString(),
     );
+    DateTime effectiveDate = DateTime.now();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(job == null ? 'הוספת סוג עבודה' : 'עריכת סוג עבודה'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'שם התפקיד'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(job == null ? 'הוספת סוג עבודה' : 'עריכת סוג עבודה'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'שם התפקיד'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: rateController,
+                  decoration: const InputDecoration(labelText: 'תעריף שעתי (חדש)'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('תאריך תחילה', style: TextStyle(fontSize: 14)),
+                  subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
+                  trailing: const Icon(Icons.calendar_today_rounded, size: 20),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: effectiveDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => effectiveDate = picked);
+                    }
+                  },
+                ),
+                if (job != null &&
+                    job.wageHistory != null &&
+                    job.wageHistory!.isNotEmpty) ...[
+                  const Divider(height: 32),
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'היסטוריית שכר:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...job.wageHistory!.reversed.take(3).map((entry) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(DateFormat('dd/MM/yyyy').format(entry.startDate)),
+                            Text(UIUtils.formatCurrency(entry.hourlyRate)),
+                          ],
+                        ),
+                      )),
+                ],
+              ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: rateController,
-              decoration: const InputDecoration(labelText: 'תעריף שעתי'),
-              keyboardType: TextInputType.number,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('ביטול'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final provider = context.read<ShiftProvider>();
+                final name = nameController.text.trim();
+                final rate = double.tryParse(rateController.text) ?? 0.0;
+
+                final messenger = ScaffoldMessenger.of(context);
+
+                if (name.isEmpty) {
+                  messenger.hideCurrentSnackBar();
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('נא להזין שם לתפקיד'),
+                      duration: Duration(milliseconds: 4500),
+                    ),
+                  );
+                  return;
+                }
+
+                final confirmed = await UIUtils.showConfirmDialog(
+                  context: context,
+                  title: job == null ? 'הוספת תפקיד' : 'עדכון תפקיד',
+                  content:
+                      'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)} החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
+                );
+
+                if (confirmed != true) return;
+
+                if (!context.mounted) return;
+
+                if (job == null) {
+                  final newJob = JobType(
+                    id: const Uuid().v4(),
+                    name: name,
+                    hourlyRate: rate,
+                    wageHistory: [WageEntry(startDate: effectiveDate, hourlyRate: rate)],
+                  );
+                  provider.addJobType(newJob);
+                } else {
+                  job.name = name;
+                  job.hourlyRate = rate; // Update current rate
+                  
+                  // Add to history
+                  job.wageHistory ??= [];
+                  // Remove entry for same date if exists, then add
+                  job.wageHistory!.removeWhere((e) => 
+                    e.startDate.year == effectiveDate.year && 
+                    e.startDate.month == effectiveDate.month && 
+                    e.startDate.day == effectiveDate.day);
+                  
+                  job.wageHistory!.add(WageEntry(startDate: effectiveDate, hourlyRate: rate));
+                  job.wageHistory!.sort((a, b) => a.startDate.compareTo(b.startDate));
+                  
+                  provider.updateJobType(job);
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text('שמור'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('ביטול'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final provider = context.read<ShiftProvider>();
-              final name = nameController.text.trim();
-              final rate = double.tryParse(rateController.text) ?? 0.0;
-
-              final messenger = ScaffoldMessenger.of(context);
-
-              if (name.isEmpty) {
-                messenger.hideCurrentSnackBar();
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('נא להזין שם לתפקיד'),
-                    duration: Duration(milliseconds: 4500),
-                  ),
-                );
-                return;
-              }
-
-              // Check if name already exists (excluding the current job being edited)
-              final exists = provider.jobTypes.any(
-                (j) =>
-                    j.name.toLowerCase() == name.toLowerCase() &&
-                    j.id != job?.id,
-              );
-
-              if (exists) {
-                messenger.hideCurrentSnackBar();
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('תפקיד בשם זה כבר קיים'),
-                    duration: Duration(milliseconds: 4500),
-                  ),
-                );
-                return;
-              }
-
-              if (rate < 0) {
-                messenger.hideCurrentSnackBar();
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('השכר לא יכול להיות שלילי'),
-                    duration: Duration(milliseconds: 4500),
-                  ),
-                );
-                return;
-              }
-
-              final confirmed = await UIUtils.showConfirmDialog(
-                context: context,
-                title: job == null ? 'הוספת תפקיד' : 'עדכון תפקיד',
-                content:
-                    'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)}?',
-              );
-
-              if (confirmed != true) return;
-
-              if (!context.mounted) return;
-
-              if (job == null) {
-                provider.addJobType(
-                  JobType(id: const Uuid().v4(), name: name, hourlyRate: rate),
-                );
-              } else {
-                job.name = name;
-                job.hourlyRate = rate;
-                provider.updateJobType(job);
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('שמור'),
-          ),
-        ],
       ),
     );
   }

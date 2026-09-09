@@ -3,6 +3,7 @@ import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/expense.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/models/wage_entry.dart';
 
 class PersistenceService {
   static const String shiftsBoxName = 'shifts';
@@ -18,6 +19,7 @@ class PersistenceService {
     Hive.registerAdapter(ShiftAdapter());
     Hive.registerAdapter(BreakTypeAdapter());
     Hive.registerAdapter(ExpenseAdapter());
+    Hive.registerAdapter(WageEntryAdapter());
 
     await Hive.openBox<Shift>(shiftsBoxName);
     await Hive.openBox<JobType>(jobTypesBoxName);

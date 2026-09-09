@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
 
     for (var shift in shiftProvider.shifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-      final rate = job?.hourlyRate ?? 40.22;
+      final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
       grandTotalNetHours += shift.netHours;
       grandTotalBaseSalary += shift.netHours * rate;
       grandTotalTips += shift.tips;
@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
     // Include Active or Paused Timer in Grand Total
     if (timerProvider.startTime != null) {
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
-      final rate = job?.hourlyRate ?? 40.22;
+      final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       grandTotalNetHours += timerProvider.netMinutes / 60.0;
       grandTotalBaseSalary += (timerProvider.netMinutes / 60.0) * rate;
       grandTotalTips += timerProvider.tips;
@@ -608,7 +608,7 @@ class _ShiftTile extends StatelessWidget {
     final shiftProvider = context.read<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-    final rate = job?.hourlyRate ?? 40.22;
+    final rate = job?.getRateForDate(shift.date) ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
 
     String breakInfo = "";
