@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/models/job_type.dart';
+import 'package:shiftly/models/wage_entry.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/screens/home_screen.dart';
@@ -521,9 +522,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
               if (!context.mounted) return;
 
-              provider.addJobType(
-                JobType(id: const Uuid().v4(), name: name, hourlyRate: rate),
+              final newJob = JobType(
+                id: const Uuid().v4(),
+                name: name,
+                hourlyRate: rate,
+                wageHistory: [WageEntry(startDate: DateTime.now(), hourlyRate: rate)],
               );
+              provider.addJobType(newJob);
               Navigator.pop(context);
             },
             child: const Text('הוסף'),

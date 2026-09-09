@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/models/job_type.dart';
+import 'package:shiftly/models/wage_entry.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/utils/ui_utils.dart';
@@ -117,6 +119,35 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                   messenger.showSnackBar(
                     const SnackBar(
                       content: Text('נא להזין שם לתפקיד'),
+                      duration: Duration(milliseconds: 4500),
+                    ),
+                  );
+                  return;
+                }
+
+                // Check if name already exists (excluding the current job being edited)
+                final exists = provider.jobTypes.any(
+                  (j) =>
+                      j.name.toLowerCase() == name.toLowerCase() &&
+                      j.id != job?.id,
+                );
+
+                if (exists) {
+                  messenger.hideCurrentSnackBar();
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('תפקיד בשם זה כבר קיים'),
+                      duration: Duration(milliseconds: 4500),
+                    ),
+                  );
+                  return;
+                }
+
+                if (rate < 0) {
+                  messenger.hideCurrentSnackBar();
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('השכר לא יכול להיות שלילי'),
                       duration: Duration(milliseconds: 4500),
                     ),
                   );

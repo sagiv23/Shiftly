@@ -57,7 +57,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       _selectedBreakType = s.breakType ?? BreakType.none;
 
       // Initialize tips for editing
-      if (s.tips > 0) {
+      if (s.individualTips != null && s.individualTips!.isNotEmpty) {
+        for (var tip in s.individualTips!) {
+          _tipControllers.add(
+            TextEditingController(text: tip.toStringAsFixed(0)),
+          );
+        }
+      } else if (s.tips > 0) {
         _tipControllers.add(
           TextEditingController(text: s.tips.toStringAsFixed(0)),
         );
@@ -117,6 +123,19 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     }
   }
 
+  @override
+  void dispose() {
+    for (var c in _tipControllers) {
+      c.dispose();
+    }
+    for (var c in _timerTipControllers) {
+      c.dispose();
+    }
+    _rawTextController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
+
   double _calculateTotalTips(List<TextEditingController> controllers) {
     return controllers.fold(
       0.0,
@@ -146,7 +165,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       content:
           'האם אתה בטוח שברצונך לשמור את המשמרת עם טיפים בסך ${UIUtils.formatCurrency(totalTips)}?',
     );
-    if (!confirmed) return;
+    if (confirmed != true) return;
+
+    if (!mounted) return;
 
     final end = timerProvider.isRunning
         ? DateTime.now()
@@ -220,7 +241,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     );
     if (confirmed != true) return;
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     final job = shiftProvider.getJobTypeById(_selectedJobTypeId!);
 
@@ -235,7 +256,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.hourlyRate = job?.getRateForDate(_selectedDate);
       s.breakType = _selectedBreakType;
       s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
-      if (!context.mounted) return;
+
+      if (!mounted) return;
       shiftProvider.updateShift(s);
 
       final messenger = ScaffoldMessenger.of(context);
@@ -260,7 +282,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         breakType: _selectedBreakType,
         unpaidBreakMinutes: settings.unpaidBreakDurationMinutes,
       );
-      if (!context.mounted) return;
+      if (!mounted) return;
       shiftProvider.addShift(shift);
 
       final messenger = ScaffoldMessenger.of(context);
@@ -273,7 +295,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         ),
       );
     }
-    if (context.mounted) Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   void _saveRaw() async {
@@ -289,7 +311,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       title: 'פענוח משמרות',
       content: 'האם לפענח ולשמור ${validLines.length} משמרות מהטקסט שהודבק?',
     );
-    if (!confirmed) return;
+    if (confirmed != true) return;
+
+    if (!context.mounted) return;
 
     int addedCount = 0;
     for (var line in validLines) {
@@ -300,17 +324,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         unpaidMinutes: settings.unpaidBreakDurationMinutes,
       );
       if (shift != null) {
-        if (!context.mounted) continue;
+        if (!mounted) continue;
         context.read<ShiftProvider>().addShift(shift);
         addedCount++;
       }
     }
 
     if (addedCount > 0) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       Navigator.pop(context);
     } else {
-      if (!context.mounted) return;
+      if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       messenger.clearSnackBars();
       messenger.showSnackBar(
@@ -433,17 +457,16 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                                 .withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        (isReviewMode
-                                ? Colors.green
-                                : (isRunning
-                                      ? (isOnBreak
-                                            ? Colors.orange
-                                            : Theme.of(
-                                                context,
-                                              ).colorScheme.primary)
-                                      : Colors.grey))
-                            .withValues(alpha: 0.3),
+                    color: (isReviewMode
+                            ? Colors.green
+                            : (isRunning
+                                ? (isOnBreak
+                                    ? Colors.orange
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.primary)
+                                : Colors.grey))
+                        .withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
