@@ -5,6 +5,7 @@ import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/wage_entry.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/theme/app_theme.dart';
 import 'package:shiftly/utils/ui_utils.dart';
 import 'package:uuid/uuid.dart';
@@ -245,6 +246,9 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                     value: settings.shiftRemindersEnabled,
                     onChanged: (val) async {
                       await settings.setShiftRemindersEnabled(val);
+                      if (val) {
+                        await NotificationService.requestPermissions();
+                      }
                       if (!context.mounted) return;
                       context.read<ShiftProvider>().refreshAllReminders();
                     },

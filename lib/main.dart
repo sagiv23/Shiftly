@@ -13,14 +13,17 @@ import 'package:shiftly/theme/app_theme.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  try {
-    WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
 
-    // Initialize services in parallel where possible, but safely
-    await Future.wait([
-      NotificationService.init(),
-      initializeDateFormatting('he_IL', null),
-    ]);
+  try {
+    // Never let notification engine failure take down the whole app.
+    try {
+      await NotificationService.init();
+    } catch (e) {
+      debugPrint('NotificationService.init failed (non-fatal): $e');
+    }
+
+    await initializeDateFormatting('he_IL', null);
 
     final persistenceService = PersistenceService();
     await persistenceService.init();

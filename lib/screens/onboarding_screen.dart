@@ -6,6 +6,7 @@ import 'package:shiftly/models/wage_entry.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/screens/home_screen.dart';
+import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/utils/ui_utils.dart';
 import 'package:shiftly/widgets/app_icon.dart';
 import 'package:uuid/uuid.dart';
@@ -53,6 +54,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await settings.setBreakDurations(_paidMinutes, _unpaidMinutes);
     await settings.setShiftRemindersEnabled(_remindersEnabled);
     await settings.setShiftReminderDurationHours(_reminderHours);
+
+    // iOS requires an explicit permission prompt; trigger when reminders are on.
+    if (_remindersEnabled) {
+      await NotificationService.requestPermissions();
+    }
+
     await settings.completeOnboarding();
 
     if (!mounted) return;
@@ -211,7 +218,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             subtitle: const Text('תזכורת אוטומטית לפני כל משמרת'),
             value: _remindersEnabled,
-            onChanged: (val) => setState(() => _remindersEnabled = val),
+            onChanged: (val) async {
+              setState(() => _remindersEnabled = val);
+              if (val) {
+                await NotificationService.requestPermissions();
+              }
+            },
           ),
           if (_remindersEnabled) ...[
             const SizedBox(height: 32),

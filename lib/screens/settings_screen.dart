@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -68,6 +69,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: settings.shiftRemindersEnabled,
               onChanged: (val) async {
                 await settings.setShiftRemindersEnabled(val);
+                if (val) {
+                  await NotificationService.requestPermissions();
+                }
                 if (!context.mounted) return;
                 context.read<ShiftProvider>().refreshAllReminders();
               },
