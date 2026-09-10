@@ -277,19 +277,14 @@ class _CalendarShiftTile extends StatelessWidget {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         shiftProvider.deleteShift(shift.id);
 
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('משמרת מיום $dateStr נמחקה'),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 4500),
-            action: SnackBarAction(
-              label: 'ביטול',
-              onPressed: () {
-                shiftProvider.addShift(shift);
-              },
-            ),
+        UIUtils.showSnackBar(
+          context,
+          'משמרת מיום $dateStr נמחקה',
+          action: SnackBarAction(
+            label: 'ביטול',
+            onPressed: () {
+              shiftProvider.addShift(shift);
+            },
           ),
         );
       },

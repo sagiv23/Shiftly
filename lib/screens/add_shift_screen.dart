@@ -194,15 +194,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     timerProvider.resetTimer();
 
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('המשמרת נשמרה בהצלחה'),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(milliseconds: 4500),
-      ),
-    );
+    UIUtils.showSnackBar(context, 'המשמרת נשמרה בהצלחה');
     Navigator.pop(context);
   }
 
@@ -260,15 +252,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       if (!mounted) return;
       shiftProvider.updateShift(s);
 
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('משמרת מיום $dateStr עודכנה בהצלחה'),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 4500),
-        ),
-      );
+      UIUtils.showSnackBar(context, 'משמרת מיום $dateStr עודכנה בהצלחה');
     } else {
       final shift = Shift(
         id: const Uuid().v4(),
@@ -285,15 +269,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       if (!mounted) return;
       shiftProvider.addShift(shift);
 
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('משמרת מיום $dateStr נשמרה בהצלחה'),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 4500),
-        ),
-      );
+      UIUtils.showSnackBar(context, 'משמרת מיום $dateStr נשמרה בהצלחה');
     }
     if (mounted) Navigator.pop(context);
   }
@@ -418,13 +394,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 _tabController.animateTo(0);
               } else if (!isRunning) {
                 if (_selectedJobTypeId == null) {
-                  final messenger = ScaffoldMessenger.of(context);
-                  messenger.clearSnackBars();
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('בחר סוג עבודה קודם'),
-                      duration: Duration(milliseconds: 4500),
-                    ),
+                  UIUtils.showSnackBar(
+                    context,
+                    'בחר סוג עבודה קודם',
+                    isError: true,
                   );
                   return;
                 }

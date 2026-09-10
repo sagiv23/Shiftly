@@ -76,25 +76,19 @@ class ExpensesScreen extends StatelessWidget {
               onPressed: () async {
                 final desc = descriptionController.text.trim();
                 final amount = double.tryParse(amountController.text) ?? 0.0;
-                final messenger = ScaffoldMessenger.of(context);
-
                 if (desc.isEmpty) {
-                  messenger.hideCurrentSnackBar();
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('נא להזין תיאור'),
-                      duration: Duration(milliseconds: 4500),
-                    ),
+                  UIUtils.showSnackBar(
+                    context,
+                    'נא להזין תיאור',
+                    isError: true,
                   );
                   return;
                 }
                 if (amount <= 0) {
-                  messenger.hideCurrentSnackBar();
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('הסכום חייב להיות גדול מ-0'),
-                      duration: Duration(milliseconds: 4500),
-                    ),
+                  UIUtils.showSnackBar(
+                    context,
+                    'הסכום חייב להיות גדול מ-0',
+                    isError: true,
                   );
                   return;
                 }
@@ -277,17 +271,12 @@ class _ExpenseTile extends StatelessWidget {
       },
       onDismissed: (_) {
         shiftProvider.deleteExpense(expense.id);
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('הוצאה "${expense.description}" נמחקה'),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 4500),
-            action: SnackBarAction(
-              label: 'ביטול',
-              onPressed: () => shiftProvider.addExpense(expense),
-            ),
+        UIUtils.showSnackBar(
+          context,
+          'הוצאה "${expense.description}" נמחקה',
+          action: SnackBarAction(
+            label: 'ביטול',
+            onPressed: () => shiftProvider.addExpense(expense),
           ),
         );
       },
