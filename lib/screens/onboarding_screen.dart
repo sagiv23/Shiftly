@@ -420,7 +420,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const SizedBox(height: 8),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('תאריך תחילה', style: TextStyle(fontSize: 14)),
+                title: const Text(
+                  'תאריך תחילה',
+                  style: TextStyle(fontSize: 14),
+                ),
                 subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
                 trailing: const Icon(Icons.calendar_today_rounded, size: 20),
                 onTap: () async {
@@ -473,10 +476,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 );
                 history.sort((a, b) => a.startDate.compareTo(b.startDate));
 
-                final updated = job.copyWith(
-                  name: name,
-                  wageHistory: history,
-                );
+                final updated = job.copyWith(name: name, wageHistory: history);
                 updated.syncCurrentRate();
 
                 await context.read<ShiftProvider>().updateJobType(updated);

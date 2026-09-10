@@ -239,8 +239,7 @@ class _CalendarShiftTile extends StatelessWidget {
     final shiftProvider = context.read<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-    final rate =
-        shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
+    final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
 
     String breakInfo = "";

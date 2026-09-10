@@ -47,6 +47,7 @@ class AppTheme {
   );
 
   static ThemeData get lightTheme => _buildTheme(Brightness.light);
+
   static ThemeData get darkTheme => _buildTheme(Brightness.dark);
 
   static ThemeData _buildTheme(Brightness brightness) {
@@ -62,14 +63,9 @@ class AppTheme {
           ? const Color(0xFF334155)
           : const Color(0xFFE2E8F0),
       outline: isDark ? darkBorder : lightBorder,
-      outlineVariant: isDark
-          ? darkBorder.withValues(alpha: 0.6)
-          : lightBorder,
+      outlineVariant: isDark ? darkBorder.withValues(alpha: 0.6) : lightBorder,
       error: expenseSoft,
-    ).copyWith(
-      secondary: primaryDark,
-      tertiary: profit,
-    );
+    ).copyWith(secondary: primaryDark, tertiary: profit);
 
     final cardColor = isDark ? darkCard : lightCard;
     final borderColor = isDark ? darkBorder : lightBorder;
@@ -77,12 +73,12 @@ class AppTheme {
         ? darkCard.withValues(alpha: 0.7)
         : const Color(0xFFF1F5F9);
 
-    final baseText = Typography.material2021(
-      platform: TargetPlatform.android,
-    ).black.apply(
-      bodyColor: colorScheme.onSurface,
-      displayColor: colorScheme.onSurface,
-    );
+    final baseText = Typography.material2021(platform: TargetPlatform.android)
+        .black
+        .apply(
+          bodyColor: colorScheme.onSurface,
+          displayColor: colorScheme.onSurface,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -202,10 +198,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
           ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -216,10 +209,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
           ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -251,9 +241,7 @@ class AppTheme {
         ),
       ),
       chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide.none,
         labelPadding: const EdgeInsets.symmetric(horizontal: 6),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
@@ -339,10 +327,7 @@ class AppTheme {
           ? darkCard.withValues(alpha: 0.55)
           : Colors.white.withValues(alpha: 0.7),
       borderRadius: BorderRadius.circular(radiusMd),
-      border: Border.all(
-        color: isDark ? darkBorder : lightBorder,
-        width: 1,
-      ),
+      border: Border.all(color: isDark ? darkBorder : lightBorder, width: 1),
     );
   }
 
@@ -377,7 +362,9 @@ class _ScalePressState extends State<ScalePress> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: widget.onTap == null ? null : (_) => setState(() => _pressed = true),
+      onTapDown: widget.onTap == null
+          ? null
+          : (_) => setState(() => _pressed = true),
       onTapUp: widget.onTap == null
           ? null
           : (_) {

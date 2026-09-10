@@ -69,8 +69,9 @@ class PersistenceService {
 
     for (final job in jobBox.values) {
       if (job.wageHistory == null || job.wageHistory!.isEmpty) {
-        final jobShifts =
-            shiftBox.values.where((s) => s.jobTypeId == job.id).toList();
+        final jobShifts = shiftBox.values
+            .where((s) => s.jobTypeId == job.id)
+            .toList();
         DateTime startDate;
         if (jobShifts.isNotEmpty) {
           startDate = jobShifts

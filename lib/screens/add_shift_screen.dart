@@ -386,8 +386,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final buttonColor = isReviewMode
         ? AppTheme.profit
         : (isRunning
-            ? (isOnBreak ? AppTheme.warningSoft : AppTheme.primary)
-            : Theme.of(context).colorScheme.surfaceContainerHighest);
+              ? (isOnBreak ? AppTheme.warningSoft : AppTheme.primary)
+              : Theme.of(context).colorScheme.surfaceContainerHighest);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spaceMd),
@@ -465,10 +465,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                         isReviewMode
                             ? Icons.play_arrow_rounded
                             : (isRunning
-                                ? (isOnBreak
-                                    ? Icons.play_arrow_rounded
-                                    : Icons.stop_rounded)
-                                : Icons.play_arrow_rounded),
+                                  ? (isOnBreak
+                                        ? Icons.play_arrow_rounded
+                                        : Icons.stop_rounded)
+                                  : Icons.play_arrow_rounded),
                         size: 64,
                         color: isReviewMode || isRunning
                             ? Colors.white
@@ -479,8 +479,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                         isReviewMode
                             ? 'המשך משמרת'
                             : (isRunning
-                                ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
-                                : 'התחל משמרת'),
+                                  ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
+                                  : 'התחל משמרת'),
                         style: TextStyle(
                           color: isReviewMode || isRunning
                               ? Colors.white
@@ -511,10 +511,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               color: livePay < 0 ? AppTheme.expense : AppTheme.primaryDark,
             ),
           ),
-          Text(
-            'נצבר בשידור חי',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text('נצבר בשידור חי', style: Theme.of(context).textTheme.bodySmall),
           if (isOnBreak || timerProvider.accumulatedUnpaidMinutes > 0) ...[
             const SizedBox(height: AppTheme.spaceSm),
             Container(
@@ -544,8 +541,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   Text(
                     isOnBreak
                         ? (timerProvider.activeBreakType == BreakType.paid
-                            ? 'בהפסקה בתשלום...'
-                            : 'בהפסקה ללא תשלום (השעון עצר)')
+                              ? 'בהפסקה בתשלום...'
+                              : 'בהפסקה ללא תשלום (השעון עצר)')
                         : 'סה"כ הפסקה (לא בתשלום): ${timerProvider.accumulatedUnpaidMinutes.toStringAsFixed(1)} דק\'',
                     style: TextStyle(
                       color: AppTheme.warningSoft,
@@ -626,9 +623,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                     ),
                   ),
                 ],
-                selected: {
-                  if (isOnBreak) timerProvider.activeBreakType,
-                },
+                selected: {if (isOnBreak) timerProvider.activeBreakType},
                 onSelectionChanged: (val) {
                   final settings = context.read<SettingsProvider>();
                   if (val.isEmpty) {
@@ -650,15 +645,15 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed:
-                    isReviewMode ? _finishTimerShift : _showFinishDialog,
+                onPressed: isReviewMode ? _finishTimerShift : _showFinishDialog,
                 icon: Icon(
                   isReviewMode ? Icons.check_rounded : Icons.stop_rounded,
                 ),
                 label: Text(isReviewMode ? 'שמור וסיים' : 'סיום משמרת'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isReviewMode ? AppTheme.profit : AppTheme.primaryDark,
+                  backgroundColor: isReviewMode
+                      ? AppTheme.profit
+                      : AppTheme.primaryDark,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -681,10 +676,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               child: Text(
                 'ביטול ואיפוס',
                 style: TextStyle(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.45),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.45),
                 ),
               ),
             ),
@@ -913,9 +907,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                         child: Text(
                           'פורמט: DD.MM[.YYYY] - HH:mm - HH:mm [הפסקה] [+ tips]\n'
                           'הפסקות: ללא / 20 דקות / 45 דקות',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                         ),
                       ),
                     ],
@@ -973,10 +968,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'טיפים',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            Text('טיפים', style: Theme.of(context).textTheme.titleSmall),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -1057,9 +1049,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           }),
           icon: const Icon(Icons.add_circle_outline_rounded),
           label: const Text('הוסף טיפ'),
-          style: TextButton.styleFrom(
-            foregroundColor: AppTheme.primaryDark,
-          ),
+          style: TextButton.styleFrom(foregroundColor: AppTheme.primaryDark),
         ),
       ],
     );
@@ -1139,19 +1129,15 @@ class _PickerTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      value,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    Text(value, style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),
               Icon(
                 Icons.chevron_left_rounded,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.35),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.35),
               ),
             ],
           ),

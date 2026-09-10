@@ -75,7 +75,9 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                     'תאריך תחילה',
                     style: TextStyle(fontSize: 14),
                   ),
-                  subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
+                  subtitle: Text(
+                    DateFormat('dd/MM/yyyy').format(effectiveDate),
+                  ),
                   trailing: const Icon(Icons.calendar_today_rounded, size: 20),
                   onTap: () async {
                     final picked = await showDatePicker(
@@ -221,9 +223,7 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
       });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('הגדרות עבודה'),
-      ),
+      appBar: AppBar(title: const Text('הגדרות עבודה')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppTheme.spaceSm,
@@ -369,11 +369,13 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
               ),
             )
           else
-            ...jobs.map((job) => _JobCard(
-                  job: job,
-                  onEdit: () => _showEditJobDialog(context, job),
-                  onDelete: () => _deleteJob(context, job),
-                )),
+            ...jobs.map(
+              (job) => _JobCard(
+                job: job,
+                onEdit: () => _showEditJobDialog(context, job),
+                onDelete: () => _deleteJob(context, job),
+              ),
+            ),
         ],
       ),
     );
@@ -514,10 +516,9 @@ class _JobCard extends StatelessWidget {
                 Text(
                   'היסטוריית שכר',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.65),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.65),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -581,14 +582,17 @@ class _WageTimeline extends StatelessWidget {
                             ? AppTheme.primary
                             : AppTheme.primary.withValues(alpha: 0.45),
                         border: Border.all(
-                          color: Theme.of(context).cardTheme.color ??
+                          color:
+                              Theme.of(context).cardTheme.color ??
                               (isDark ? AppTheme.darkCard : Colors.white),
                           width: 2,
                         ),
                         boxShadow: isFirst
                             ? [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.4),
+                                  color: AppTheme.primary.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   blurRadius: 6,
                                 ),
                               ]
@@ -626,10 +630,9 @@ class _WageTimeline extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: compact ? 12 : 13,
                                 fontWeight: FontWeight.w500,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.6),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                             ),
                             if (isFirst && !compact)
@@ -663,8 +666,9 @@ class _WageTimeline extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: (delta > 0 ? AppTheme.profit : AppTheme.expense)
-                                .withValues(alpha: 0.12),
+                            color:
+                                (delta > 0 ? AppTheme.profit : AppTheme.expense)
+                                    .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

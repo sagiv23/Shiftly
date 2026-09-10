@@ -80,7 +80,9 @@ class UIUtils {
             child: Text(
               cancelLabel,
               style: TextStyle(
-                color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.5),
+                color: Theme.of(
+                  ctx,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ),

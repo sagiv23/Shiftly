@@ -125,8 +125,7 @@ class HomeScreen extends StatelessWidget {
                           totalExpenses: grandTotalExpenses,
                         );
                       }
-                      final monthKey =
-                          groupedShifts.keys.elementAt(index - 1);
+                      final monthKey = groupedShifts.keys.elementAt(index - 1);
                       final shifts = groupedShifts[monthKey]!;
                       return _MonthExpansionSection(
                         monthKey: monthKey,
@@ -146,19 +145,20 @@ class HomeScreen extends StatelessWidget {
                 const AddShiftScreen(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 1),
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
-                  ),
-                ),
-                child: child,
-              );
-            },
+                  return SlideTransition(
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(0, 1),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                    child: child,
+                  );
+                },
           ),
         ),
         label: const Text('משמרת חדשה'),
@@ -295,10 +295,9 @@ class _ActiveTimerBanner extends StatelessWidget {
                   Text(
                     'זמן: $timeStr  ·  ${UIUtils.formatCurrency(pay)}',
                     style: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 13,
                       fontFamily: 'monospace',
                       fontFeatures: const [FontFeature.tabularFigures()],
@@ -508,9 +507,7 @@ class _HeaderInfoItem extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: (amount ?? 0) < 0
-                  ? const Color(0xFFFECACA)
-                  : Colors.white,
+              color: (amount ?? 0) < 0 ? const Color(0xFFFECACA) : Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.bold,
               fontFeatures: const [FontFeature.tabularFigures()],
@@ -555,8 +552,7 @@ class _MonthExpansionSection extends StatelessWidget {
 
     for (var shift in shifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-      final rate =
-          shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
+      final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
       totalNetHours += shift.netHours;
       totalBaseSalary += shift.netHours * rate;
       totalTips += shift.tips;
@@ -706,9 +702,9 @@ class _SummaryItem extends StatelessWidget {
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           Text(
@@ -738,8 +734,7 @@ class _ShiftTile extends StatelessWidget {
     final shiftProvider = context.read<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-    final rate =
-        shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
+    final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final breakType = shift.breakType ?? BreakType.none;
@@ -789,10 +784,7 @@ class _ShiftTile extends StatelessWidget {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 2,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -805,19 +797,20 @@ class _ShiftTile extends StatelessWidget {
                       AddShiftScreen(shiftToEdit: shift),
                   transitionsBuilder:
                       (context, animation, secondaryAnimation, child) {
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(1, 0),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                        ),
-                      ),
-                      child: child,
-                    );
-                  },
+                        return SlideTransition(
+                          position:
+                              Tween<Offset>(
+                                begin: const Offset(1, 0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                              ),
+                          child: child,
+                        );
+                      },
                 ),
               );
             },
@@ -852,10 +845,9 @@ class _ShiftTile extends StatelessWidget {
                           DateFormat.E('he_IL').format(shift.date),
                           style: TextStyle(
                             fontSize: 10,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.5),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
