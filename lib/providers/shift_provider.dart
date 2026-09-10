@@ -102,7 +102,23 @@ class ShiftProvider with ChangeNotifier {
     } else {
       await _persistence.jobTypesBox.put(jobType.id, jobType);
     }
+    // Keep shift snapshots in sync with the updated wage history
+    await _resyncShiftRatesForJob(jobType);
     notifyListeners();
+  }
+
+  /// Re-applies [JobType.getRateForDate] onto every shift for this job so
+  /// wage history edits (raises, reverts, effective-date changes) show up
+  /// immediately without requiring each shift to be re-saved.
+  Future<void> _resyncShiftRatesForJob(JobType job) async {
+    for (final shift in _persistence.shiftsBox.values) {
+      if (shift.jobTypeId != job.id) continue;
+      final rate = job.getRateForDate(shift.date);
+      if (shift.hourlyRate != rate) {
+        shift.hourlyRate = rate;
+        await shift.save();
+      }
+    }
   }
 
   Future<void> deleteJobType(String id) async {

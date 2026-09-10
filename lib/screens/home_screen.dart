@@ -11,6 +11,7 @@ import 'package:shiftly/screens/calendar_screen.dart';
 import 'package:shiftly/screens/expenses_screen.dart';
 import 'package:shiftly/screens/job_types_screen.dart';
 import 'package:shiftly/screens/settings_screen.dart';
+import 'package:shiftly/theme/app_theme.dart';
 import 'package:shiftly/utils/ui_utils.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -22,7 +23,6 @@ class HomeScreen extends StatelessWidget {
     final timerProvider = context.watch<TimerProvider>();
     final groupedShifts = shiftProvider.shiftsGroupedByMonth;
 
-    // Calculate Grand Totals
     double grandTotalNetHours = 0;
     double grandTotalBaseSalary = 0;
     double grandTotalTips = 0;
@@ -40,7 +40,6 @@ class HomeScreen extends StatelessWidget {
       grandTotalExpenses += expense.amount;
     }
 
-    // Include Active or Paused Timer in Grand Total
     if (timerProvider.startTime != null) {
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
@@ -68,14 +67,17 @@ class HomeScreen extends StatelessWidget {
               tooltip: 'הוצאות',
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ExpensesScreen()),
+                MaterialPageRoute(builder: (_) => const ExpensesScreen()),
               ),
             ),
           ],
         ),
-        title: const Text(
+        title: Text(
           'Shiftly',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
         actions: [
           IconButton(
@@ -94,7 +96,7 @@ class HomeScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppTheme.spaceXs),
         ],
       ),
       body: Column(
@@ -102,32 +104,18 @@ class HomeScreen extends StatelessWidget {
           if (timerProvider.startTime != null)
             _ActiveTimerBanner(timer: timerProvider),
           Expanded(
-            child: groupedShifts.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.history_rounded,
-                          size: 64,
-                          color: Colors.grey.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'עדיין לא נרשמו משמרות.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  )
+            child: groupedShifts.isEmpty && timerProvider.startTime == null
+                ? _EmptyState()
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(
-                      16,
-                      8,
-                      16,
+                      AppTheme.spaceSm,
+                      AppTheme.spaceXs,
+                      AppTheme.spaceSm,
                       100,
-                    ), // Added bottom padding to avoid FAB and system bars
-                    itemCount: groupedShifts.length + 1,
+                    ),
+                    itemCount: groupedShifts.isEmpty
+                        ? 1
+                        : groupedShifts.length + 1,
                     itemBuilder: (context, index) {
                       if (index == 0) {
                         return _GrandTotalCard(
@@ -137,9 +125,9 @@ class HomeScreen extends StatelessWidget {
                           totalExpenses: grandTotalExpenses,
                         );
                       }
-                      final monthKey = groupedShifts.keys.elementAt(index - 1);
+                      final monthKey =
+                          groupedShifts.keys.elementAt(index - 1);
                       final shifts = groupedShifts[monthKey]!;
-                      // Keep the latest month expanded by default
                       return _MonthExpansionSection(
                         monthKey: monthKey,
                         shifts: shifts,
@@ -158,20 +146,19 @@ class HomeScreen extends StatelessWidget {
                 const AddShiftScreen(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position:
-                        Tween<Offset>(
-                          begin: const Offset(0, 1),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOutCubic,
-                          ),
-                        ),
-                    child: child,
-                  );
-                },
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+                child: child,
+              );
+            },
           ),
         ),
         label: const Text('משמרת חדשה'),
@@ -230,14 +217,21 @@ class _ActiveTimerBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
     final job = shiftProvider.getJobTypeById(timer.jobTypeId ?? "");
-    final pay = timer.calculateLivePay(job?.hourlyRate ?? 40.22);
+    final rate = timer.startTime != null
+        ? (job?.getRateForDate(timer.startTime!) ?? 40.22)
+        : (job?.hourlyRate ?? 40.22);
+    final pay = timer.calculateLivePay(rate);
 
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final d = timer.elapsed;
     final timeStr =
         "${d.inHours}:${twoDigits(d.inMinutes.remainder(60))}:${twoDigits(d.inSeconds.remainder(60))}";
 
-    return GestureDetector(
+    final isBreak = timer.isOnBreak;
+    final accent = isBreak ? AppTheme.warningSoft : AppTheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return ScalePress(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
@@ -245,29 +239,43 @@ class _ActiveTimerBanner extends StatelessWidget {
         ),
       ),
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.fromLTRB(
+          AppTheme.spaceSm,
+          AppTheme.spaceXs,
+          AppTheme.spaceSm,
+          AppTheme.spaceSm,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spaceSm,
+          vertical: 12,
+        ),
         decoration: BoxDecoration(
-          color: timer.isOnBreak
-              ? Colors.orange.shade100
-              : Colors.blue.shade100,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: timer.isOnBreak
-                ? Colors.orange.shade300
-                : Colors.blue.shade300,
-          ),
+          color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: accent.withValues(alpha: 0.35)),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(
-              timer.isOnBreak
-                  ? Icons.pause_circle_filled_rounded
-                  : Icons.play_circle_filled_rounded,
-              color: timer.isOnBreak
-                  ? Colors.orange.shade800
-                  : Colors.blue.shade800,
-              size: 32,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isBreak
+                    ? Icons.pause_circle_filled_rounded
+                    : Icons.play_circle_filled_rounded,
+                color: accent,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -275,33 +283,31 @@ class _ActiveTimerBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    timer.isOnBreak
+                    isBreak
                         ? 'משמרת בהפסקה...'
                         : 'משמרת פעילה: ${job?.name ?? ""}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: timer.isOnBreak
-                          ? Colors.orange.shade900
-                          : Colors.blue.shade900,
+                      color: isDark ? accent : accent.withValues(alpha: 0.9),
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    'זמן: $timeStr | ${UIUtils.formatCurrency(pay)}',
+                    'זמן: $timeStr  ·  ${UIUtils.formatCurrency(pay)}',
                     style: TextStyle(
-                      color: timer.isOnBreak
-                          ? Colors.orange.shade800
-                          : Colors.blue.shade800,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                       fontSize: 13,
+                      fontFamily: 'monospace',
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16,
-              color: timer.isOnBreak ? Colors.orange : Colors.blue,
-            ),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: accent),
           ],
         ),
       ),
@@ -324,84 +330,143 @@ class _GrandTotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final net = totalBase + totalTips - totalExpenses;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 24, top: 8),
+      margin: const EdgeInsets.only(
+        bottom: AppTheme.spaceMd,
+        top: AppTheme.spaceXs,
+      ),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.secondary,
-          ],
+          colors: isDark
+              ? [
+                  const Color(0xFF0EA5E9),
+                  const Color(0xFF0369A1),
+                  const Color(0xFF1E293B),
+                ]
+              : [
+                  const Color(0xFF38BDF8),
+                  const Color(0xFF0EA5E9),
+                  const Color(0xFF0284C7),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: AppTheme.primary.withValues(alpha: isDark ? 0.25 : 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        child: Stack(
           children: [
-            Text(
-              'סה"כ הצטבר (נטו פחות הוצאות)',
-              style: TextStyle(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onPrimary.withValues(alpha: 0.8),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+            // Soft glass overlay
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.18),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              UIUtils.formatCurrency(totalBase + totalTips - totalExpenses),
-              style: TextStyle(
-                color: (totalBase + totalTips - totalExpenses) < 0
-                    ? Colors
-                          .red
-                          .shade200 // Lighter red on dark background
-                    : Theme.of(context).colorScheme.onPrimary,
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
+            Positioned(
+              top: -40,
+              left: -30,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.08),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
+            Positioned(
+              bottom: -50,
+              right: -20,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.06),
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppTheme.spaceMd),
+              child: Column(
                 children: [
-                  _HeaderInfoItem(
-                    label: 'שעות',
-                    value: totalHours.toStringAsFixed(2),
+                  Text(
+                    'סה"כ הצטבר (נטו פחות הוצאות)',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  _VerticalDivider(),
-                  _HeaderInfoItem(
-                    label: 'בסיס',
-                    value: UIUtils.formatCurrency(totalBase),
-                    amount: totalBase,
+                  const SizedBox(height: AppTheme.spaceXs),
+                  Text(
+                    UIUtils.formatCurrency(net),
+                    style: AppTheme.monoNumber.copyWith(
+                      color: net < 0 ? const Color(0xFFFECACA) : Colors.white,
+                      fontSize: 40,
+                      height: 1.1,
+                    ),
                   ),
-                  _VerticalDivider(),
-                  _HeaderInfoItem(
-                    label: 'טיפים',
-                    value: UIUtils.formatCurrency(totalTips),
-                    amount: totalTips,
-                  ),
-                  _VerticalDivider(),
-                  _HeaderInfoItem(
-                    label: 'הוצאות',
-                    value: UIUtils.formatCurrency(totalExpenses),
-                    amount: -totalExpenses, // Treat as negative for color
+                  const SizedBox(height: AppTheme.spaceSm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: AppTheme.spaceXs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _HeaderInfoItem(
+                          label: 'שעות',
+                          value: totalHours.toStringAsFixed(2),
+                        ),
+                        _VerticalDivider(),
+                        _HeaderInfoItem(
+                          label: 'בסיס',
+                          value: UIUtils.formatCurrency(totalBase),
+                          amount: totalBase,
+                        ),
+                        _VerticalDivider(),
+                        _HeaderInfoItem(
+                          label: 'טיפים',
+                          value: UIUtils.formatCurrency(totalTips),
+                          amount: totalTips,
+                        ),
+                        _VerticalDivider(),
+                        _HeaderInfoItem(
+                          label: 'הוצאות',
+                          value: UIUtils.formatCurrency(totalExpenses),
+                          amount: -totalExpenses,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -426,29 +491,33 @@ class _HeaderInfoItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(
-              context,
-            ).colorScheme.onPrimary.withValues(alpha: 0.7),
-            fontSize: 12,
+    return Flexible(
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            color: (amount ?? 0) < 0
-                ? Colors.red.shade200
-                : Theme.of(context).colorScheme.onPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: (amount ?? 0) < 0
+                  ? const Color(0xFFFECACA)
+                  : Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -457,7 +526,7 @@ class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 24,
+      height: 28,
       width: 1,
       color: Colors.white.withValues(alpha: 0.2),
     );
@@ -486,7 +555,8 @@ class _MonthExpansionSection extends StatelessWidget {
 
     for (var shift in shifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-      final rate = job?.hourlyRate ?? 40.22;
+      final rate =
+          shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
       totalNetHours += shift.netHours;
       totalBaseSalary += shift.netHours * rate;
       totalTips += shift.tips;
@@ -501,58 +571,69 @@ class _MonthExpansionSection extends StatelessWidget {
     final monthName = DateFormat.MMMM('he_IL').format(date);
     final year = date.year;
 
-    // Check if timer (active or paused) belongs to this month
     final timerProvider = context.watch<TimerProvider>();
     if (timerProvider.startTime != null &&
         timerProvider.startTime!.year == year &&
         timerProvider.startTime!.month == date.month) {
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
-      final rate = job?.hourlyRate ?? 40.22;
+      final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       totalNetHours += timerProvider.netMinutes / 60.0;
       totalBaseSalary += (timerProvider.netMinutes / 60.0) * rate;
       totalTips += timerProvider.tips;
     }
 
+    final net = totalBaseSalary + totalTips - totalMonthExpenses;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: AppTheme.spaceSm),
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           border: Border.all(
-            color: Theme.of(
-              context,
-            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+            color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: ExpansionTile(
           initiallyExpanded: initiallyExpanded,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderRadius: BorderRadius.all(Radius.circular(AppTheme.radiusLg)),
           ),
           collapsedShape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderRadius: BorderRadius.all(Radius.circular(AppTheme.radiusLg)),
           ),
-          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          tilePadding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spaceSm + 4,
+            vertical: AppTheme.spaceXs,
+          ),
+          childrenPadding: const EdgeInsets.only(bottom: AppTheme.spaceXs),
           title: Text(
             "$monthName $year",
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
+              color: AppTheme.primaryDark,
             ),
           ),
-          subtitle: Text(
-            "${UIUtils.formatCurrency(totalBaseSalary + totalTips - totalMonthExpenses)} סה\"כ נטו | ${totalNetHours.toStringAsFixed(2)} שעות",
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              "${UIUtils.formatCurrency(net)} סה\"כ נטו  ·  ${totalNetHours.toStringAsFixed(2)} שעות",
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
           children: [
             const Divider(height: 1, indent: 20, endIndent: 20),
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(AppTheme.spaceSm),
               child: IntrinsicHeight(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -567,6 +648,7 @@ class _MonthExpansionSection extends StatelessWidget {
                       label: 'טיפים',
                       value: UIUtils.formatCurrency(totalTips),
                       amount: totalTips,
+                      accent: AppTheme.profit,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
@@ -577,18 +659,15 @@ class _MonthExpansionSection extends StatelessWidget {
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
                       label: 'נטו',
-                      value: UIUtils.formatCurrency(
-                        totalBaseSalary + totalTips - totalMonthExpenses,
-                      ),
+                      value: UIUtils.formatCurrency(net),
                       isBold: true,
-                      amount: totalBaseSalary + totalTips - totalMonthExpenses,
+                      amount: net,
                     ),
                   ],
                 ),
               ),
             ),
             ...shifts.map((shift) => _ShiftTile(shift: shift)),
-            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -601,38 +680,50 @@ class _SummaryItem extends StatelessWidget {
   final String value;
   final bool isBold;
   final double? amount;
+  final Color? accent;
 
   const _SummaryItem({
     required this.label,
     required this.value,
     this.isBold = false,
     this.amount,
+    this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textColor = (amount ?? 0) < 0
-        ? Colors.red
-        : (isBold ? Theme.of(context).colorScheme.primary : null);
+    Color? textColor;
+    if ((amount ?? 0) < 0) {
+      textColor = AppTheme.expense;
+    } else if (isBold) {
+      textColor = AppTheme.primaryDark;
+    } else if (accent != null) {
+      textColor = accent;
+    }
 
-    return Column(
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: isBold ? 18 : 16,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: textColor,
+    return Flexible(
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isBold ? 16 : 14,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+              color: textColor,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -647,30 +738,30 @@ class _ShiftTile extends StatelessWidget {
     final shiftProvider = context.read<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-    final rate = job?.getRateForDate(shift.date) ?? 40.22;
+    final rate =
+        shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
-
-    String breakInfo = "";
-    if ((shift.breakType ?? BreakType.none) == BreakType.paid) {
-      breakInfo =
-          " (${settings.paidBreakDurationMinutes.toStringAsFixed(0)} דק' בתשלום)";
-    } else if ((shift.breakType ?? BreakType.none) == BreakType.unpaid) {
-      breakInfo =
-          " (${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)} דק' ללא תשלום)";
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final breakType = shift.breakType ?? BreakType.none;
 
     return Dismissible(
       key: Key(shift.id),
       direction: DismissDirection.startToEnd,
       background: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spaceSm,
+          vertical: AppTheme.spaceXs / 2,
+        ),
         decoration: BoxDecoration(
-          color: Colors.red.shade100,
-          borderRadius: BorderRadius.circular(16),
+          color: AppTheme.expense.withValues(alpha: isDark ? 0.2 : 0.15),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade700),
+        padding: const EdgeInsets.only(right: AppTheme.spaceMd),
+        child: const Icon(
+          Icons.delete_sweep_rounded,
+          color: AppTheme.expenseSoft,
+        ),
       ),
       confirmDismiss: (direction) async {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
@@ -698,107 +789,200 @@ class _ShiftTile extends StatelessWidget {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    AddShiftScreen(shiftToEdit: shift),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                      return SlideTransition(
-                        position:
-                            Tween<Offset>(
-                              begin: const Offset(1, 0),
-                              end: Offset.zero,
-                            ).animate(
-                              CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 2,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            onTap: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      AddShiftScreen(shiftToEdit: shift),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      ),
+                      child: child,
+                    );
+                  },
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spaceXs,
+                vertical: 10,
+              ),
+              child: Row(
+                children: [
+                  // Date badge
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          DateFormat.d().format(shift.date),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: AppTheme.primaryDark,
+                            height: 1,
+                          ),
+                        ),
+                        Text(
+                          DateFormat.E('he_IL').format(shift.date),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.5),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              AppTheme.iconForJobName(job?.name),
+                              size: 16,
+                              color: AppTheme.primaryDark,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                job?.name ?? 'לא ידוע',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                        child: child,
-                      );
-                    },
-              ),
-            );
-          },
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primaryContainer.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                DateFormat.d().format(shift.date),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-          ),
-          title: Text(
-            "${job?.name ?? 'לא ידוע'}$breakInfo",
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-          ),
-          subtitle: Text(
-            "${DateFormat.Hm().format(shift.startTime)} - ${DateFormat.Hm().format(shift.endTime)} | "
-            "${shift.netHours.toStringAsFixed(2)} ש'",
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-          ),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                UIUtils.formatCurrency(pay),
-                style: UIUtils.getCurrencyStyle(
-                  context,
-                  pay,
-                  positiveColor: Theme.of(context).colorScheme.primary,
-                  baseStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "${DateFormat.Hm().format(shift.startTime)} – ${DateFormat.Hm().format(shift.endTime)}  ·  ${shift.netHours.toStringAsFixed(2)} ש'",
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        if (shift.tips > 0 || breakType != BreakType.none) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              if (shift.tips > 0)
+                                _ShiftTag(
+                                  label:
+                                      '+${UIUtils.formatCurrency(shift.tips)}',
+                                  icon: Icons.payments_outlined,
+                                  color: AppTheme.profit,
+                                ),
+                              if (breakType == BreakType.paid)
+                                _ShiftTag(
+                                  label:
+                                      "${settings.paidBreakDurationMinutes.toStringAsFixed(0)}' בתשלום",
+                                  icon: Icons.timer_outlined,
+                                  color: AppTheme.primary,
+                                ),
+                              if (breakType == BreakType.unpaid)
+                                _ShiftTag(
+                                  label:
+                                      "${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)}' הפסקה",
+                                  icon: Icons.coffee_outlined,
+                                  color: AppTheme.warningSoft,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              if (shift.tips > 0)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      "+${UIUtils.formatCurrency(shift.tips)} טיפ",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.green.shade700,
+                  const SizedBox(width: AppTheme.spaceXs),
+                  Text(
+                    UIUtils.formatCurrency(pay),
+                    style: UIUtils.getCurrencyStyle(
+                      context,
+                      pay,
+                      positiveColor: AppTheme.primaryDark,
+                      baseStyle: const TextStyle(
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
                   ),
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ShiftTag extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _ShiftTag({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.18 : 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

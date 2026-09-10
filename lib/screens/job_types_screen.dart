@@ -171,8 +171,11 @@ class _WorkConfigScreenState extends State<WorkConfigScreen> {
                     id: const Uuid().v4(),
                     name: name,
                     hourlyRate: rate,
-                    wageHistory: [WageEntry(startDate: effectiveDate, hourlyRate: rate)],
+                    wageHistory: [
+                      WageEntry(startDate: effectiveDate, hourlyRate: rate),
+                    ],
                   );
+                  newJob.syncCurrentRate();
                   provider.addJobType(newJob);
                 } else {
                   job.name = name;

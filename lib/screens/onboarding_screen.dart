@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/wage_entry.dart';
@@ -315,7 +316,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      '${UIUtils.formatCurrency(job.hourlyRate)} לשעה',
+                      '${UIUtils.formatCurrency(job.getRateForDate(DateTime.now()))} לשעה',
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -383,59 +384,96 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _editJobType(JobType job) {
     final nameController = TextEditingController(text: job.name);
     final rateController = TextEditingController(
-      text: job.hourlyRate.toString(),
+      text: job.getRateForDate(DateTime.now()).toString(),
     );
+    DateTime effectiveDate = DateTime.now();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ערוך סוג משמרת'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'שם התפקיד'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('ערוך סוג משמרת'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'שם התפקיד'),
+              ),
+              TextField(
+                controller: rateController,
+                decoration: const InputDecoration(labelText: 'שכר לשעה'),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('תאריך תחילה', style: TextStyle(fontSize: 14)),
+                subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
+                trailing: const Icon(Icons.calendar_today_rounded, size: 20),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: effectiveDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setDialogState(() => effectiveDate = picked);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('ביטול'),
             ),
-            TextField(
-              controller: rateController,
-              decoration: const InputDecoration(labelText: 'שכר לשעה'),
-              keyboardType: TextInputType.number,
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                final rate =
+                    double.tryParse(rateController.text) ?? job.hourlyRate;
+
+                if (name.isEmpty) return;
+
+                final confirmed = await UIUtils.showConfirmDialog(
+                  context: context,
+                  title: 'עדכון תפקיד',
+                  content:
+                      'האם לעדכן את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)} החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
+                );
+
+                if (confirmed != true) return;
+
+                if (!context.mounted) return;
+
+                final history = List<WageEntry>.from(job.wageHistory ?? []);
+                history.removeWhere(
+                  (e) =>
+                      e.startDate.year == effectiveDate.year &&
+                      e.startDate.month == effectiveDate.month &&
+                      e.startDate.day == effectiveDate.day,
+                );
+                history.add(
+                  WageEntry(startDate: effectiveDate, hourlyRate: rate),
+                );
+                history.sort((a, b) => a.startDate.compareTo(b.startDate));
+
+                final updated = job.copyWith(
+                  name: name,
+                  wageHistory: history,
+                );
+                updated.syncCurrentRate();
+
+                await context.read<ShiftProvider>().updateJobType(updated);
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('שמור'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ביטול'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameController.text.trim();
-              final rate =
-                  double.tryParse(rateController.text) ?? job.hourlyRate;
-
-              if (name.isEmpty) return;
-
-              final confirmed = await UIUtils.showConfirmDialog(
-                context: context,
-                title: 'עדכון תפקיד',
-                content:
-                    'האם לעדכן את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)}?',
-              );
-
-              if (confirmed != true) return;
-
-              if (!context.mounted) return;
-
-              context.read<ShiftProvider>().updateJobType(
-                job.copyWith(name: name, hourlyRate: rate),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('שמור'),
-          ),
-        ],
       ),
     );
   }
@@ -526,8 +564,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 id: const Uuid().v4(),
                 name: name,
                 hourlyRate: rate,
-                wageHistory: [WageEntry(startDate: DateTime.now(), hourlyRate: rate)],
+                wageHistory: [
+                  WageEntry(startDate: DateTime.now(), hourlyRate: rate),
+                ],
               );
+              newJob.syncCurrentRate();
               provider.addJobType(newJob);
               Navigator.pop(context);
             },

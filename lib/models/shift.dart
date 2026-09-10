@@ -69,7 +69,12 @@ class Shift extends HiveObject {
     return net < 0 ? 0.0 : net;
   }
 
+  /// Prefer the snapshotted rate; fall back to [fallbackRate] for legacy shifts.
+  double effectiveHourlyRate([double fallbackRate = 40.22]) {
+    return hourlyRate ?? fallbackRate;
+  }
+
   double calculateTotalPay(double currentHourlyRate) {
-    return (netHours * (hourlyRate ?? currentHourlyRate)) + tips;
+    return (netHours * effectiveHourlyRate(currentHourlyRate)) + tips;
   }
 }

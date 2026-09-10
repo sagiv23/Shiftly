@@ -24,24 +24,36 @@ class JobType extends HiveObject {
     this.wageHistory,
   });
 
+  /// Returns the hourly rate effective on [date] (date-only comparison).
   double getRateForDate(DateTime date) {
     if (wageHistory == null || wageHistory!.isEmpty) {
       return hourlyRate;
     }
 
-    // Sort history by date descending
+    final target = DateTime(date.year, date.month, date.day);
+
+    // Sort history by date descending (newest first)
     final sortedHistory = List<WageEntry>.from(wageHistory!)
       ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
-    // Find the first entry that started on or before the given date
-    for (var entry in sortedHistory) {
-      if (!entry.startDate.isAfter(date)) {
+    for (final entry in sortedHistory) {
+      final entryDate = DateTime(
+        entry.startDate.year,
+        entry.startDate.month,
+        entry.startDate.day,
+      );
+      if (!entryDate.isAfter(target)) {
         return entry.hourlyRate;
       }
     }
 
-    // If no entry found (date is before all history), return the earliest rate
+    // Date is before all history — use the earliest known rate
     return sortedHistory.last.hourlyRate;
+  }
+
+  /// Syncs [hourlyRate] to whatever rate is effective today.
+  void syncCurrentRate() {
+    hourlyRate = getRateForDate(DateTime.now());
   }
 
   JobType copyWith({

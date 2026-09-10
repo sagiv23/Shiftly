@@ -6,6 +6,7 @@ import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/screens/add_shift_screen.dart';
+import 'package:shiftly/theme/app_theme.dart';
 import 'package:shiftly/utils/ui_utils.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -238,7 +239,8 @@ class _CalendarShiftTile extends StatelessWidget {
     final shiftProvider = context.read<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
-    final rate = job?.getRateForDate(shift.date) ?? 40.22;
+    final rate =
+        shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
 
     String breakInfo = "";
