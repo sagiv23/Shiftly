@@ -541,136 +541,107 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             ),
           const SizedBox(height: 40),
 
-          // Controls Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: (isRunning || isReviewMode)
-                        ? timerProvider.jobTypeId
-                        : _selectedJobTypeId,
-                    decoration: const InputDecoration(
-                      labelText: 'סוג עבודה',
-                      prefixIcon: Icon(Icons.work_rounded),
-                    ),
-                    items: jobs
-                        .map(
-                          (j) => DropdownMenuItem(
-                            value: j.id,
-                            child: Text(j.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      if (val == null) return;
-                      if (isRunning || isReviewMode) {
-                        timerProvider.setJobType(val);
-                      } else {
-                        setState(() => _selectedJobTypeId = val);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  _buildTipsSection(_timerTipControllers),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Break/Finish Buttons
-          if (isRunning || isReviewMode)
-            Row(
+          // Controls section
+          _FormSection(
+            title: 'פרטי משמרת',
+            icon: Icons.work_outline_rounded,
+            child: Column(
               children: [
-                if (!isReviewMode)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        final settings = context.read<SettingsProvider>();
-                        timerProvider.toggleBreak(
-                          BreakType.paid,
-                          settings.paidBreakDurationMinutes,
-                        );
-                      },
-                      icon: Icon(
-                        (isOnBreak &&
-                                timerProvider.activeBreakType == BreakType.paid)
-                            ? Icons.play_arrow_rounded
-                            : Icons.timer_outlined,
-                      ),
-                      label: Text(
-                        (isOnBreak &&
-                                timerProvider.activeBreakType == BreakType.paid)
-                            ? 'סיים הפסקה'
-                            : 'הפסקה בתשלום',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.blue),
-                        foregroundColor: Colors.blue,
-                        minimumSize: const Size.fromHeight(56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
+                DropdownButtonFormField<String>(
+                  initialValue: (isRunning || isReviewMode)
+                      ? timerProvider.jobTypeId
+                      : _selectedJobTypeId,
+                  decoration: const InputDecoration(
+                    labelText: 'סוג עבודה',
+                    prefixIcon: Icon(Icons.work_rounded),
                   ),
-                if (!isReviewMode) const SizedBox(width: 8),
-                if (!isReviewMode)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        final settings = context.read<SettingsProvider>();
-                        timerProvider.toggleBreak(
-                          BreakType.unpaid,
-                          settings.unpaidBreakDurationMinutes,
-                        );
-                      },
-                      icon: Icon(
-                        (isOnBreak &&
-                                timerProvider.activeBreakType ==
-                                    BreakType.unpaid)
-                            ? Icons.play_arrow_rounded
-                            : Icons.coffee_outlined,
-                      ),
-                      label: Text(
-                        (isOnBreak &&
-                                timerProvider.activeBreakType ==
-                                    BreakType.unpaid)
-                            ? 'סיים הפסקה'
-                            : 'הפסקה ללא תשלום',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.orange.shade700),
-                        foregroundColor: Colors.orange.shade700,
-                        minimumSize: const Size.fromHeight(56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  items: jobs
+                      .map(
+                        (j) => DropdownMenuItem(
+                          value: j.id,
+                          child: Row(
+                            children: [
+                              Icon(AppTheme.iconForJobName(j.name), size: 18),
+                              const SizedBox(width: 8),
+                              Text(j.name),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
+                      )
+                      .toList(),
+                  onChanged: (val) {
+                    if (val == null) return;
+                    if (isRunning || isReviewMode) {
+                      timerProvider.setJobType(val);
+                    } else {
+                      setState(() => _selectedJobTypeId = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: AppTheme.spaceMd),
+                _buildTipsSection(_timerTipControllers),
               ],
             ),
-          const SizedBox(height: 16),
+          ),
+
+          if (isRunning && !isReviewMode) ...[
+            const SizedBox(height: AppTheme.spaceMd),
+            _FormSection(
+              title: 'הפסקות',
+              icon: Icons.coffee_outlined,
+              child: SegmentedButton<BreakType?>(
+                emptySelectionAllowed: true,
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: BreakType.paid,
+                    icon: const Icon(Icons.timer_outlined, size: 18),
+                    label: Text(
+                      '${context.read<SettingsProvider>().paidBreakDurationMinutes.toStringAsFixed(0)}\' בתשלום',
+                    ),
+                  ),
+                  ButtonSegment(
+                    value: BreakType.unpaid,
+                    icon: const Icon(Icons.coffee_outlined, size: 18),
+                    label: Text(
+                      '${context.read<SettingsProvider>().unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ללא',
+                    ),
+                  ),
+                ],
+                selected: {
+                  if (isOnBreak) timerProvider.activeBreakType,
+                },
+                onSelectionChanged: (val) {
+                  final settings = context.read<SettingsProvider>();
+                  if (val.isEmpty) {
+                    if (isOnBreak) timerProvider.endBreak();
+                    return;
+                  }
+                  final type = val.first!;
+                  final minutes = type == BreakType.paid
+                      ? settings.paidBreakDurationMinutes
+                      : settings.unpaidBreakDurationMinutes;
+                  timerProvider.toggleBreak(type, minutes);
+                },
+              ),
+            ),
+          ],
+
+          const SizedBox(height: AppTheme.spaceMd),
           if (isRunning || isReviewMode)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: isReviewMode ? _finishTimerShift : _showFinishDialog,
+                onPressed:
+                    isReviewMode ? _finishTimerShift : _showFinishDialog,
                 icon: Icon(
                   isReviewMode ? Icons.check_rounded : Icons.stop_rounded,
                 ),
                 label: Text(isReviewMode ? 'שמור וסיים' : 'סיום משמרת'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isReviewMode
-                      ? Colors.green
-                      : Colors.blue.shade600,
+                  backgroundColor:
+                      isReviewMode ? AppTheme.profit : AppTheme.primaryDark,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
                 ),
               ),
             ),

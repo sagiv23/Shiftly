@@ -151,9 +151,6 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        label: const Text('משמרת חדשה'),
-        icon: const Icon(Icons.add_rounded),
-        tooltip: 'הוסף משמרת',
         onPressed: () => Navigator.push(
           context,
           PageRouteBuilder(
@@ -176,6 +173,48 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
           ),
+        ),
+        label: const Text('משמרת חדשה'),
+        icon: const Icon(Icons.add_rounded),
+        tooltip: 'הוסף משמרת',
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spaceLg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spaceMd),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.history_rounded,
+                size: 56,
+                color: AppTheme.primary.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spaceSm),
+            Text(
+              'עדיין לא נרשמו משמרות',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppTheme.spaceXs),
+            Text(
+              'לחץ על "משמרת חדשה" כדי להתחיל',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

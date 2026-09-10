@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/models/expense.dart';
 import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/theme/app_theme.dart';
 import 'package:shiftly/utils/ui_utils.dart';
 import 'package:uuid/uuid.dart';
 
@@ -150,18 +151,23 @@ class ExpensesScreen extends StatelessWidget {
                   Icon(
                     Icons.receipt_long_rounded,
                     size: 64,
-                    color: Colors.grey.withValues(alpha: 0.5),
+                    color: AppTheme.expense.withValues(alpha: 0.45),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'אין הוצאות רשומות.',
-                    style: TextStyle(color: Colors.grey),
+                  const SizedBox(height: AppTheme.spaceSm),
+                  Text(
+                    'אין הוצאות רשומות',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.spaceSm,
+                AppTheme.spaceXs,
+                AppTheme.spaceSm,
+                100,
+              ),
               itemCount: groupedExpenses.length,
               itemBuilder: (context, index) {
                 final monthKey = groupedExpenses.keys.elementAt(index);
@@ -175,6 +181,8 @@ class ExpensesScreen extends StatelessWidget {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showExpenseDialog(context),
+        backgroundColor: AppTheme.expenseSoft,
+        foregroundColor: Colors.white,
         label: const Text('הוצאה חדשה'),
         icon: const Icon(Icons.add_rounded),
       ),
@@ -212,17 +220,16 @@ class _MonthExpenseSection extends StatelessWidget {
             children: [
               Text(
                 '$monthName ${date.year}',
-                style: const TextStyle(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.blueGrey,
+                  color: AppTheme.primaryDark,
                 ),
               ),
               Text(
                 'סה"כ: ${UIUtils.formatCurrency(totalMonthExpenses)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Colors.redAccent,
+                  color: AppTheme.expenseSoft,
                 ),
               ),
             ],
@@ -252,12 +259,15 @@ class _ExpenseTile extends StatelessWidget {
       background: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.red.shade100,
-          borderRadius: BorderRadius.circular(12),
+          color: AppTheme.expense.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade700),
+        padding: const EdgeInsets.only(right: AppTheme.spaceMd),
+        child: const Icon(
+          Icons.delete_sweep_rounded,
+          color: AppTheme.expenseSoft,
+        ),
       ),
       confirmDismiss: (direction) async {
         return await UIUtils.showConfirmDialog(
@@ -288,12 +298,12 @@ class _ExpenseTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(8),
+              color: AppTheme.expense.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.money_off_rounded,
-              color: Colors.red.shade700,
+              color: AppTheme.expenseSoft,
               size: 20,
             ),
           ),
@@ -307,7 +317,8 @@ class _ExpenseTile extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: Colors.redAccent,
+              color: AppTheme.expenseSoft,
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
         ),

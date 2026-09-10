@@ -52,20 +52,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(AppTheme.spaceSm),
             child: Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).cardTheme.color,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
                 border: Border.all(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppTheme.darkBorder
+                      : AppTheme.lightBorder,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],

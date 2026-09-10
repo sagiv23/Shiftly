@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,14 +25,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
-          20,
-          20,
-          20,
+          AppTheme.spaceSm,
+          AppTheme.spaceSm,
+          AppTheme.spaceSm,
           100,
-        ), // Added bottom padding
+        ),
         children: [
-          _buildSectionHeader('ערכת נושא'),
-          const SizedBox(height: 12),
+          _buildSectionHeader(context, 'ערכת נושא'),
+          const SizedBox(height: AppTheme.spaceXs),
           SegmentedButton<ThemeMode>(
             segments: const [
               ButtonSegment(
@@ -53,14 +54,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             selected: {settings.themeMode},
             onSelectionChanged: (val) => settings.setThemeMode(val.first),
           ),
-          const SizedBox(height: 32),
-          _buildSectionHeader('תזכורות'),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.spaceLg),
+          _buildSectionHeader(context, 'תזכורות'),
+          const SizedBox(height: AppTheme.spaceXs),
           Card(
             child: SwitchListTile(
               title: const Text('התראות'),
               subtitle: const Text('אפשר שליחת התראות מהאפליקציה'),
-              secondary: const Icon(Icons.notifications_active_outlined),
+              secondary: Icon(
+                Icons.notifications_active_outlined,
+                color: AppTheme.primaryDark,
+              ),
               value: settings.shiftRemindersEnabled,
               onChanged: (val) async {
                 await settings.setShiftRemindersEnabled(val);
@@ -74,16 +78,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
-        ),
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.2,
       ),
     );
   }
