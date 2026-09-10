@@ -193,7 +193,8 @@ class AppTheme {
           elevation: 0,
           backgroundColor: primary,
           foregroundColor: const Color(0xFF0F172A),
-          minimumSize: const Size.fromHeight(52),
+          // Size.fromHeight(h) is Size(infinity, h) and breaks buttons in Rows.
+          minimumSize: const Size(64, 52),
           padding: const EdgeInsets.symmetric(horizontal: spaceMd),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
@@ -203,7 +204,7 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size(64, 52),
           padding: const EdgeInsets.symmetric(horizontal: spaceMd),
           side: BorderSide(color: borderColor),
           shape: RoundedRectangleBorder(
@@ -215,7 +216,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           elevation: 0,
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size(64, 52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
           ),

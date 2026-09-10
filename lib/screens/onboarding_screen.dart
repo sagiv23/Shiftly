@@ -38,6 +38,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _reminderHours = settings.shiftReminderDurationHours;
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _nextPage() {
     if (_currentPage < 3) {
       _pageController.nextPage(
@@ -616,6 +622,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ElevatedButton(
             onPressed: _nextPage,
             style: ElevatedButton.styleFrom(
+              minimumSize: const Size(0, 52),
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
