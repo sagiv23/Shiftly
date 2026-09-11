@@ -145,8 +145,18 @@ class ShiftProvider with ChangeNotifier {
   Map<String, List<Expense>> get expensesGroupedByMonth {
     return groupBy(
       expenses,
-      (Expense e) =>
-          "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}",
+      (Expense e) => "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}",
     );
+  }
+
+  Future<void> factoryReset() async {
+    // 1. Cancel all notifications
+    for (var shift in shifts) {
+      NotificationService.cancelNotification(shift.id.hashCode);
+    }
+    // 2. Clear persistence
+    await _persistence.deleteAllData();
+    // 3. Notify listeners
+    notifyListeners();
   }
 }

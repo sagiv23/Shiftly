@@ -455,10 +455,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onEdit: () => _showEditJobDialog(context, job),
                 onDelete: () => _deleteJob(context, job),
               ),
+          ),
+          const SizedBox(height: AppTheme.spaceLg),
+          _buildSectionHeader(context, 'אזור מסוכן'),
+          const SizedBox(height: AppTheme.spaceXs),
+          Card(
+            child: ListTile(
+              title: const Text(
+                'איפוס נתונים מלא',
+                style: TextStyle(color: AppTheme.expense, fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text('מחיקת כל המשמרות, התפקידים וההוצאות לצמיתות'),
+              trailing: const Icon(Icons.delete_forever_rounded, color: AppTheme.expense),
+              onTap: () => _handleFactoryReset(context),
             ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleFactoryReset(BuildContext context) async {
+    // Step 1: First Confirmation
+    final confirmed = await UIUtils.showConfirmDialog(
+      context: context,
+      title: 'איפוס נתונים?',
+      content: 'האם אתה בטוח שברצונך למחוק את כל נתוני העבודה ולאפס את האפליקציה? פעולה זו אינה ניתנת לביטול.',
+      confirmLabel: 'המשך',
+      isDestructive: true,
+    );
+
+    if (confirmed != true) return;
+    if (!context.mounted) return;
+
+    // Step 2: Second Confirmation (Manual Input or special warning)
+    final finalConfirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: AppTheme.expense),
+            const SizedBox(width: 8),
+            const Text('אישור סופי ומוחלט'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('שימו לב: כל היסטוריית המשמרות, השכר וההוצאות תימחק לעד.'),
+            SizedBox(height: 16),
+            Text(
+              'האם אתה בטוח שברצונך למחוק הכל?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('ביטול', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.expense,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('מחק הכל לצמיתות'),
+          ),
+        ],
+      ),
+    );
+
+    if (finalConfirm != true) return;
+    if (!context.mounted) return;
+
+    // Perform Reset
+    final shiftProvider = context.read<ShiftProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
+
+    await shiftProvider.factoryReset();
+    await settingsProvider.resetAllSettings();
+
+    if (!context.mounted) return;
+
+    UIUtils.showSnackBar(context, 'האפליקציה אותחלה בהצלחה');
+
+    // Navigate to Splash or Onboarding
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {

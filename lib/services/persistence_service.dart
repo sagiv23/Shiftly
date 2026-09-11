@@ -59,6 +59,39 @@ class PersistenceService {
     await _migrateWageHistory();
   }
 
+  Future<void> deleteAllData() async {
+    await shiftsBox.clear();
+    await jobTypesBox.clear();
+    await expensesBox.clear();
+    await settingsBox.clear();
+
+    // Re-seed default job types
+    final epoch = DateTime(2020, 1, 1);
+    final defaultJobs = [
+      JobType(
+        id: '1',
+        name: 'סדרן',
+        hourlyRate: 37.20,
+        wageHistory: [WageEntry(startDate: epoch, hourlyRate: 37.20)],
+      ),
+      JobType(
+        id: '2',
+        name: 'מזנון',
+        hourlyRate: 40.22,
+        wageHistory: [WageEntry(startDate: epoch, hourlyRate: 40.22)],
+      ),
+      JobType(
+        id: '3',
+        name: 'פריקה',
+        hourlyRate: 40.22,
+        wageHistory: [WageEntry(startDate: epoch, hourlyRate: 40.22)],
+      ),
+    ];
+    for (var job in defaultJobs) {
+      await jobTypesBox.put(job.id, job);
+    }
+  }
+
   /// Backfills wageHistory on jobs and snapshots hourlyRate on existing shifts.
   Future<void> _migrateWageHistory() async {
     final settings = settingsBox;

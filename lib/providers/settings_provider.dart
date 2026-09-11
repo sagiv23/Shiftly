@@ -85,4 +85,14 @@ class SettingsProvider with ChangeNotifier {
     await _persistence.settingsBox.put('hasCompletedOnboarding', true);
     notifyListeners();
   }
+
+  Future<void> resetAllSettings() async {
+    _themeMode = ThemeMode.system;
+    _paidBreakDurationMinutes = 20.0;
+    _unpaidBreakDurationMinutes = 45.0;
+    _hasCompletedOnboarding = false;
+    _shiftRemindersEnabled = true;
+    _shiftReminderDurationHours = 4.0;
+    notifyListeners();
+  }
 }
