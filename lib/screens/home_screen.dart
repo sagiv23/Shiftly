@@ -9,7 +9,6 @@ import 'package:shiftly/providers/timer_provider.dart';
 import 'package:shiftly/screens/add_shift_screen.dart';
 import 'package:shiftly/screens/calendar_screen.dart';
 import 'package:shiftly/screens/expenses_screen.dart';
-import 'package:shiftly/screens/job_types_screen.dart';
 import 'package:shiftly/screens/settings_screen.dart';
 import 'package:shiftly/theme/app_theme.dart';
 import 'package:shiftly/utils/ui_utils.dart';
@@ -80,14 +79,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.work_outline_rounded),
-            tooltip: 'הגדרות עבודה',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const WorkConfigScreen()),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'הגדרות',
