@@ -145,7 +145,8 @@ class ShiftProvider with ChangeNotifier {
   Map<String, List<Expense>> get expensesGroupedByMonth {
     return groupBy(
       expenses,
-      (Expense e) => "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}",
+      (Expense e) =>
+          "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}",
     );
   }
 

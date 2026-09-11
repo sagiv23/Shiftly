@@ -174,8 +174,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     const Icon(
@@ -228,12 +230,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   120, // Increased for ad space and system navigation
                 ),
                 sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      return _CalendarShiftTile(shift: selectedShifts[index]);
-                    },
-                    childCount: selectedShifts.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    return _CalendarShiftTile(shift: selectedShifts[index]);
+                  }, childCount: selectedShifts.length),
                 ),
               ),
           ],

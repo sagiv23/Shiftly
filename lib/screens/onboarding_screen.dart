@@ -89,7 +89,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _buildPage(child: _buildWelcomePage()),
                   _buildPage(child: _buildBreakSettingsPage()),
                   _buildPage(child: _buildReminderSettingsPage()),
-                  _buildJobTypesPage(), // Special structure for job types (ListView)
+                  _buildJobTypesPage(),
+                  // Special structure for job types (ListView)
                 ],
               ),
             ),
@@ -272,7 +273,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Text(
-              '${(value * 10).round() / 10} $displaySuffix'.replaceAll('.0 ', ' '),
+              '${(value * 10).round() / 10} $displaySuffix'.replaceAll(
+                '.0 ',
+                ' ',
+              ),
               style: const TextStyle(
                 color: Colors.blue,
                 fontWeight: FontWeight.bold,
@@ -442,7 +446,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     'תאריך תחילה',
                     style: TextStyle(fontSize: 14),
                   ),
-                  subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
+                  subtitle: Text(
+                    DateFormat('dd/MM/yyyy').format(effectiveDate),
+                  ),
                   trailing: const Icon(Icons.calendar_today_rounded, size: 20),
                   onTap: () async {
                     final picked = await showDatePicker(

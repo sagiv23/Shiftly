@@ -346,7 +346,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                           Text(
-                            '${(settings.shiftReminderDurationHours * 10).round() / 10} שעות'.replaceAll('.0 ', ' '),
+                            '${(settings.shiftReminderDurationHours * 10).round() / 10} שעות'
+                                .replaceAll('.0 ', ' '),
                             style: const TextStyle(
                               color: AppTheme.primaryDark,
                               fontWeight: FontWeight.bold,
@@ -429,7 +430,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Row(
               children: [
                 Expanded(
-                    child: _buildSectionHeader(context, 'סוגי עבודות ותעריפים')),
+                  child: _buildSectionHeader(context, 'סוגי עבודות ותעריפים'),
+                ),
                 TextButton.icon(
                   onPressed: () => _showEditJobDialog(context),
                   icon: const Icon(Icons.add_rounded),
@@ -467,11 +469,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text(
                   'איפוס נתונים מלא',
                   style: TextStyle(
-                      color: AppTheme.expense, fontWeight: FontWeight.bold),
+                    color: AppTheme.expense,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                subtitle: const Text('מחיקת כל המשמרות, התפקידים וההוצאות לצמיתות'),
-                trailing: const Icon(Icons.delete_forever_rounded,
-                    color: AppTheme.expense),
+                subtitle: const Text(
+                  'מחיקת כל המשמרות, התפקידים וההוצאות לצמיתות',
+                ),
+                trailing: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: AppTheme.expense,
+                ),
                 onTap: () => _handleFactoryReset(context),
               ),
             ),
@@ -557,9 +565,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.2,
-          ),
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.2,
+      ),
     );
   }
 }
@@ -652,11 +660,10 @@ class _JobCard extends StatelessWidget {
                 Text(
                   'היסטוריית שכר',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.65),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.65),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _WageTimeline(entries: history),
@@ -715,7 +722,8 @@ class _WageTimeline extends StatelessWidget {
                             ? AppTheme.primary
                             : AppTheme.primary.withValues(alpha: 0.45),
                         border: Border.all(
-                          color: Theme.of(context).cardTheme.color ??
+                          color:
+                              Theme.of(context).cardTheme.color ??
                               (isDark ? AppTheme.darkCard : Colors.white),
                           width: 2,
                         ),
@@ -762,10 +770,9 @@ class _WageTimeline extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: compact ? 12 : 13,
                                 fontWeight: FontWeight.w500,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.6),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                             ),
                             if (isFirst && !compact)
@@ -799,8 +806,9 @@ class _WageTimeline extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: (delta > 0 ? AppTheme.profit : AppTheme.expense)
-                                .withValues(alpha: 0.12),
+                            color:
+                                (delta > 0 ? AppTheme.profit : AppTheme.expense)
+                                    .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

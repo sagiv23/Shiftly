@@ -118,7 +118,9 @@ class HomeScreen extends StatelessWidget {
                             totalExpenses: grandTotalExpenses,
                           );
                         }
-                        final monthKey = groupedShifts.keys.elementAt(index - 1);
+                        final monthKey = groupedShifts.keys.elementAt(
+                          index - 1,
+                        );
                         final shifts = groupedShifts[monthKey]!;
                         return _MonthExpansionSection(
                           monthKey: monthKey,
