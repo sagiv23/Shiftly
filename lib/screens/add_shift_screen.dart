@@ -354,16 +354,19 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 ],
               ),
       ),
-      body: isEditing
-          ? _buildManualForm(jobs)
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildTimerForm(jobs),
-                _buildManualForm(jobs),
-                _buildRawForm(jobs),
-              ],
-            ),
+      body: SafeArea(
+        bottom: true,
+        child: isEditing
+            ? _buildManualForm(jobs)
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildTimerForm(jobs),
+                  _buildManualForm(jobs),
+                  _buildRawForm(jobs),
+                ],
+              ),
+      ),
     );
   }
 
@@ -390,7 +393,12 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               : Theme.of(context).colorScheme.surfaceContainerHighest);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.spaceMd,
+        AppTheme.spaceMd,
+        AppTheme.spaceMd,
+        120, // Bottom space for ads and system navigation
+      ),
       child: Column(
         children: [
           const SizedBox(height: AppTheme.spaceSm),
@@ -722,7 +730,12 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final settings = context.read<SettingsProvider>();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppTheme.spaceSm),
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.spaceSm,
+        AppTheme.spaceSm,
+        AppTheme.spaceSm,
+        120, // Bottom space for ads and system navigation
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -862,8 +875,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   }
 
   Widget _buildRawForm(List<JobType> jobs) {
-    return Padding(
-      padding: const EdgeInsets.all(AppTheme.spaceSm),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.spaceSm,
+        AppTheme.spaceSm,
+        AppTheme.spaceSm,
+        120, // Bottom space for ads and system navigation
+      ),
       child: Column(
         children: [
           _FormSection(
@@ -920,24 +938,22 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             ),
           ),
           const SizedBox(height: AppTheme.spaceSm),
-          Expanded(
-            child: Container(
-              decoration: AppTheme.sectionDecoration(context),
-              padding: const EdgeInsets.all(4),
-              child: TextField(
-                controller: _rawTextController,
-                maxLines: null,
-                expands: true,
-                keyboardType: TextInputType.multiline,
-                textAlignVertical: TextAlignVertical.top,
-                decoration: const InputDecoration(
-                  hintText:
-                      'הדבק משמרות כאן...\nלדוגמה:\n24.6.2026 - 17:30 - 23:00 45 דקות + 50',
-                  alignLabelWithHint: true,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                ),
+          Container(
+            decoration: AppTheme.sectionDecoration(context),
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minHeight: 200),
+            child: TextField(
+              controller: _rawTextController,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              textAlignVertical: TextAlignVertical.top,
+              decoration: const InputDecoration(
+                hintText:
+                    'הדבק משמרות כאן...\nלדוגמה:\n24.6.2026 - 17:30 - 23:00 45 דקות + 50',
+                alignLabelWithHint: true,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
               ),
             ),
           ),

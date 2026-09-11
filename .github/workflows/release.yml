@@ -27,17 +27,12 @@ jobs:
           flutter build apk --release --split-per-abi
           flutter build apk --release
           cp build/app/outputs/flutter-apk/*.apk .
-      - name: Build Android App Bundle
-        run: |
-          flutter build appbundle --release
-          cp build/app/outputs/bundle/release/*.aab .
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-assets
           path: |
             *.apk
-            *.aab
 
   build-web:
     name: Build Web
@@ -189,7 +184,6 @@ jobs:
 
             **הנחיות להתקנה:**
             *   **Android (התקנה ידנית):** מומלץ להוריד את `app-release.apk` (גרסה אוניברסלית) או את `app-arm64-v8a-release.apk` (גרסה קלה למכשירים מודרניים).
-            *   **Google Play (AAB):** יש להשתמש בקובץ `app-release.aab` להעלאה לחנות.
             *   **iOS/macOS:** האפליקציה תומכת בהתראות Foreground. ב-iOS יש להתקין באמצעות כלי פיתוח (כיוון שאין חתימה).
             *   **Desktop:** יש להוריד את קובץ ה-Zip המתאים, לחלץ ולהריץ את הקובץ המפעיל.
 
@@ -197,7 +191,6 @@ jobs:
 
           files: |
             release-assets/*.apk
-            release-assets/*.aab
             release-assets/web-release.zip
             release-assets/windows-release.zip
             release-assets/linux-release.zip

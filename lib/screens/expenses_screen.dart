@@ -143,42 +143,47 @@ class ExpensesScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: groupedExpenses.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.receipt_long_rounded,
-                    size: 64,
-                    color: AppTheme.expense.withValues(alpha: 0.45),
+      body: SafeArea(
+        bottom: true,
+        child: groupedExpenses.isEmpty
+            ? Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.receipt_long_rounded,
+                        size: 64,
+                        color: AppTheme.expense.withValues(alpha: 0.45),
+                      ),
+                      const SizedBox(height: AppTheme.spaceSm),
+                      Text(
+                        'אין הוצאות רשומות',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppTheme.spaceSm),
-                  Text(
-                    'אין הוצאות רשומות',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
+                ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(
+                  AppTheme.spaceSm,
+                  AppTheme.spaceXs,
+                  AppTheme.spaceSm,
+                  120, // Increased for ad space and system navigation
+                ),
+                itemCount: groupedExpenses.length,
+                itemBuilder: (context, index) {
+                  final monthKey = groupedExpenses.keys.elementAt(index);
+                  final expenses = groupedExpenses[monthKey]!;
+                  return _MonthExpenseSection(
+                    monthKey: monthKey,
+                    expenses: expenses,
+                    onEdit: (e) => _showExpenseDialog(context, e),
+                  );
+                },
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
-                AppTheme.spaceSm,
-                AppTheme.spaceXs,
-                AppTheme.spaceSm,
-                100,
-              ),
-              itemCount: groupedExpenses.length,
-              itemBuilder: (context, index) {
-                final monthKey = groupedExpenses.keys.elementAt(index);
-                final expenses = groupedExpenses[monthKey]!;
-                return _MonthExpenseSection(
-                  monthKey: monthKey,
-                  expenses: expenses,
-                  onEdit: (e) => _showExpenseDialog(context, e),
-                );
-              },
-            ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showExpenseDialog(context),
         backgroundColor: AppTheme.expenseSoft,

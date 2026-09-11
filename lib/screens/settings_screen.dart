@@ -258,219 +258,225 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppTheme.spaceSm,
-          AppTheme.spaceSm,
-          AppTheme.spaceSm,
-          100,
-        ),
-        children: [
-          _buildSectionHeader(context, 'אפליקציה'),
-          const SizedBox(height: AppTheme.spaceXs),
-          Card(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('התראות'),
-                  subtitle: const Text('אפשר שליחת התראות מהאפליקציה'),
-                  secondary: Icon(
-                    Icons.notifications_active_outlined,
-                    color: AppTheme.primaryDark,
+      body: SafeArea(
+        bottom: true,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppTheme.spaceSm,
+            AppTheme.spaceSm,
+            AppTheme.spaceSm,
+            120, // Increased for ad space and system navigation
+          ),
+          children: [
+            _buildSectionHeader(context, 'אפליקציה'),
+            const SizedBox(height: AppTheme.spaceXs),
+            Card(
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    title: const Text('התראות'),
+                    subtitle: const Text('אפשר שליחת התראות מהאפליקציה'),
+                    secondary: Icon(
+                      Icons.notifications_active_outlined,
+                      color: AppTheme.primaryDark,
+                    ),
+                    value: settings.shiftRemindersEnabled,
+                    onChanged: (val) async {
+                      await settings.setShiftRemindersEnabled(val);
+                      if (val) {
+                        await NotificationService.requestPermissions();
+                      }
+                      if (!context.mounted) return;
+                      context.read<ShiftProvider>().refreshAllReminders();
+                    },
                   ),
-                  value: settings.shiftRemindersEnabled,
-                  onChanged: (val) async {
-                    await settings.setShiftRemindersEnabled(val);
-                    if (val) {
-                      await NotificationService.requestPermissions();
-                    }
-                    if (!context.mounted) return;
-                    context.read<ShiftProvider>().refreshAllReminders();
-                  },
-                ),
-                const Divider(height: 1, indent: 56),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  const Divider(height: 1, indent: 56),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ערכת נושא',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 12),
+                        SegmentedButton<ThemeMode>(
+                          segments: const [
+                            ButtonSegment(
+                              value: ThemeMode.system,
+                              label: Text('מערכת'),
+                              icon: Icon(Icons.brightness_auto_rounded),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.light,
+                              label: Text('יום'),
+                              icon: Icon(Icons.light_mode_rounded),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.dark,
+                              label: Text('לילה'),
+                              icon: Icon(Icons.dark_mode_rounded),
+                            ),
+                          ],
+                          selected: {settings.themeMode},
+                          onSelectionChanged: (val) =>
+                              settings.setThemeMode(val.first),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (settings.shiftRemindersEnabled) ...[
+              const SizedBox(height: AppTheme.spaceLg),
+              _buildSectionHeader(context, 'תזכורות משמרת'),
+              const SizedBox(height: AppTheme.spaceXs),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spaceSm),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'ערכת נושא',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 12),
-                      SegmentedButton<ThemeMode>(
-                        segments: const [
-                          ButtonSegment(
-                            value: ThemeMode.system,
-                            label: Text('מערכת'),
-                            icon: Icon(Icons.brightness_auto_rounded),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'זמן תזכורת (שעות)',
+                            style: TextStyle(fontWeight: FontWeight.w500),
                           ),
-                          ButtonSegment(
-                            value: ThemeMode.light,
-                            label: Text('יום'),
-                            icon: Icon(Icons.light_mode_rounded),
-                          ),
-                          ButtonSegment(
-                            value: ThemeMode.dark,
-                            label: Text('לילה'),
-                            icon: Icon(Icons.dark_mode_rounded),
+                          Text(
+                            '${(settings.shiftReminderDurationHours * 10).round() / 10} שעות'.replaceAll('.0 ', ' '),
+                            style: const TextStyle(
+                              color: AppTheme.primaryDark,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
-                        selected: {settings.themeMode},
-                        onSelectionChanged: (val) =>
-                            settings.setThemeMode(val.first),
+                      ),
+                      Slider(
+                        value: settings.shiftReminderDurationHours,
+                        min: 0.5,
+                        max: 24,
+                        divisions: 47,
+                        onChanged: (val) async {
+                          await settings.setShiftReminderDurationHours(val);
+                          if (!context.mounted) return;
+                          context.read<ShiftProvider>().refreshAllReminders();
+                        },
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          if (settings.shiftRemindersEnabled) ...[
+              ),
+            ],
             const SizedBox(height: AppTheme.spaceLg),
-            _buildSectionHeader(context, 'תזכורות משמרת'),
+            _buildSectionHeader(context, 'זמני הפסקות (דקות)'),
             const SizedBox(height: AppTheme.spaceXs),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(AppTheme.spaceSm),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'זמן תזכורת (שעות)',
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          '${settings.shiftReminderDurationHours % 1 == 0 ? settings.shiftReminderDurationHours.toInt() : settings.shiftReminderDurationHours} שעות',
-                          style: const TextStyle(
-                            color: AppTheme.primaryDark,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    TextField(
+                      controller: _paidController,
+                      decoration: const InputDecoration(
+                        labelText: 'הפסקה קצרה (בתשלום)',
+                        prefixIcon: Icon(Icons.timer_outlined),
+                      ),
+                      keyboardType: TextInputType.number,
                     ),
-                    Slider(
-                      value: settings.shiftReminderDurationHours,
-                      min: 0.5,
-                      max: 24,
-                      divisions: 47,
-                      onChanged: (val) async {
-                        await settings.setShiftReminderDurationHours(val);
-                        if (!context.mounted) return;
-                        context.read<ShiftProvider>().refreshAllReminders();
-                      },
+                    const SizedBox(height: AppTheme.spaceSm),
+                    TextField(
+                      controller: _unpaidController,
+                      decoration: const InputDecoration(
+                        labelText: 'הפסקה ארוכה (ללא תשלום)',
+                        prefixIcon: Icon(Icons.coffee_outlined),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: AppTheme.spaceSm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final paid =
+                              double.tryParse(_paidController.text) ?? 20.0;
+                          final unpaid =
+                              double.tryParse(_unpaidController.text) ?? 45.0;
+
+                          final confirmed = await UIUtils.showConfirmDialog(
+                            context: context,
+                            title: 'עדכון זמני הפסקה',
+                            content:
+                                'האם לעדכן את זמני ברירת המחדל ל-$paid דק\' בתשלום ו-$unpaid דק\' ללא תשלום?',
+                          );
+
+                          if (confirmed != true) return;
+                          if (!context.mounted) return;
+
+                          settings.setBreakDurations(paid, unpaid);
+                          UIUtils.showSnackBar(context, 'זמני ההפסקות עודכנו');
+                        },
+                        child: const Text('עדכן זמנים'),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
+            const SizedBox(height: AppTheme.spaceLg),
+            Row(
+              children: [
+                Expanded(
+                    child: _buildSectionHeader(context, 'סוגי עבודות ותעריפים')),
+                TextButton.icon(
+                  onPressed: () => _showEditJobDialog(context),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('הוסף'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primaryDark,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spaceXs),
+            if (jobs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                child: Center(
+                  child: Text(
+                    'לא נמצאו תפקידים.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              )
+            else
+              ...jobs.map(
+                (job) => _JobCard(
+                  job: job,
+                  onEdit: () => _showEditJobDialog(context, job),
+                  onDelete: () => _deleteJob(context, job),
+                ),
+              ),
+            const SizedBox(height: AppTheme.spaceLg),
+            _buildSectionHeader(context, 'אזור מסוכן'),
+            const SizedBox(height: AppTheme.spaceXs),
+            Card(
+              child: ListTile(
+                title: const Text(
+                  'איפוס נתונים מלא',
+                  style: TextStyle(
+                      color: AppTheme.expense, fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('מחיקת כל המשמרות, התפקידים וההוצאות לצמיתות'),
+                trailing: const Icon(Icons.delete_forever_rounded,
+                    color: AppTheme.expense),
+                onTap: () => _handleFactoryReset(context),
+              ),
+            ),
           ],
-          const SizedBox(height: AppTheme.spaceLg),
-          _buildSectionHeader(context, 'זמני הפסקות (דקות)'),
-          const SizedBox(height: AppTheme.spaceXs),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppTheme.spaceSm),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _paidController,
-                    decoration: const InputDecoration(
-                      labelText: 'הפסקה קצרה (בתשלום)',
-                      prefixIcon: Icon(Icons.timer_outlined),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: AppTheme.spaceSm),
-                  TextField(
-                    controller: _unpaidController,
-                    decoration: const InputDecoration(
-                      labelText: 'הפסקה ארוכה (ללא תשלום)',
-                      prefixIcon: Icon(Icons.coffee_outlined),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: AppTheme.spaceSm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final paid =
-                            double.tryParse(_paidController.text) ?? 20.0;
-                        final unpaid =
-                            double.tryParse(_unpaidController.text) ?? 45.0;
-
-                        final confirmed = await UIUtils.showConfirmDialog(
-                          context: context,
-                          title: 'עדכון זמני הפסקה',
-                          content:
-                              'האם לעדכן את זמני ברירת המחדל ל-$paid דק\' בתשלום ו-$unpaid דק\' ללא תשלום?',
-                        );
-
-                        if (confirmed != true) return;
-                        if (!context.mounted) return;
-
-                        settings.setBreakDurations(paid, unpaid);
-                        UIUtils.showSnackBar(context, 'זמני ההפסקות עודכנו');
-                      },
-                      child: const Text('עדכן זמנים'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppTheme.spaceLg),
-          Row(
-            children: [
-              Expanded(child: _buildSectionHeader(context, 'סוגי עבודות ותעריפים')),
-              TextButton.icon(
-                onPressed: () => _showEditJobDialog(context),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('הוסף'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primaryDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.spaceXs),
-          if (jobs.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(AppTheme.spaceMd),
-              child: Center(
-                child: Text(
-                  'לא נמצאו תפקידים.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            )
-          else
-            ...jobs.map(
-              (job) => _JobCard(
-                job: job,
-                onEdit: () => _showEditJobDialog(context, job),
-                onDelete: () => _deleteJob(context, job),
-              ),
-          ),
-          const SizedBox(height: AppTheme.spaceLg),
-          _buildSectionHeader(context, 'אזור מסוכן'),
-          const SizedBox(height: AppTheme.spaceXs),
-          Card(
-            child: ListTile(
-              title: const Text(
-                'איפוס נתונים מלא',
-                style: TextStyle(color: AppTheme.expense, fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text('מחיקת כל המשמרות, התפקידים וההוצאות לצמיתות'),
-              trailing: const Icon(Icons.delete_forever_rounded, color: AppTheme.expense),
-              onTap: () => _handleFactoryReset(context),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -480,7 +486,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
       title: 'איפוס נתונים?',
-      content: 'האם אתה בטוח שברצונך למחוק את כל נתוני העבודה ולאפס את האפליקציה? פעולה זו אינה ניתנת לביטול.',
+      content:
+          'האם אתה בטוח שברצונך למחוק את כל נתוני העבודה ולאפס את האפליקציה? פעולה זו אינה ניתנת לביטול.',
       confirmLabel: 'המשך',
       isDestructive: true,
     );
@@ -645,10 +652,11 @@ class _JobCard extends StatelessWidget {
                 Text(
                   'היסטוריית שכר',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.65),
-                  ),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.65),
+                      ),
                 ),
                 const SizedBox(height: 12),
                 _WageTimeline(entries: history),
@@ -707,8 +715,7 @@ class _WageTimeline extends StatelessWidget {
                             ? AppTheme.primary
                             : AppTheme.primary.withValues(alpha: 0.45),
                         border: Border.all(
-                          color:
-                              Theme.of(context).cardTheme.color ??
+                          color: Theme.of(context).cardTheme.color ??
                               (isDark ? AppTheme.darkCard : Colors.white),
                           width: 2,
                         ),
@@ -755,9 +762,10 @@ class _WageTimeline extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: compact ? 12 : 13,
                                 fontWeight: FontWeight.w500,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.6),
                               ),
                             ),
                             if (isFirst && !compact)
@@ -791,9 +799,8 @@ class _WageTimeline extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                (delta > 0 ? AppTheme.profit : AppTheme.expense)
-                                    .withValues(alpha: 0.12),
+                            color: (delta > 0 ? AppTheme.profit : AppTheme.expense)
+                                .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

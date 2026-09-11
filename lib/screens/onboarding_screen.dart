@@ -86,10 +86,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 controller: _pageController,
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [
-                  _buildWelcomePage(),
-                  _buildBreakSettingsPage(),
-                  _buildReminderSettingsPage(),
-                  _buildJobTypesPage(),
+                  _buildPage(child: _buildWelcomePage()),
+                  _buildPage(child: _buildBreakSettingsPage()),
+                  _buildPage(child: _buildReminderSettingsPage()),
+                  _buildJobTypesPage(), // Special structure for job types (ListView)
                 ],
               ),
             ),
@@ -100,152 +100,152 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildWelcomePage() {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const EssentialWorkIcon(size: 120),
-          const SizedBox(height: 40),
-          const Text(
-            'ברוכים הבאים ל-Shiftly',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Arial',
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'האפליקציה שתעזור לך לעקוב אחרי המשמרות, השכר והטיפים שלך בקלות ובדיוק.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-              fontFamily: 'Arial',
-            ),
-          ),
-          const SizedBox(height: 40),
-          const Text(
-            'בוא נגדיר כמה דברים בסיסיים כדי להתחיל.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Arial',
-            ),
-          ),
-        ],
+  Widget _buildPage({required Widget child}) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+        child: child,
       ),
+    );
+  }
+
+  Widget _buildWelcomePage() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const EssentialWorkIcon(size: 120),
+        const SizedBox(height: 40),
+        const Text(
+          'ברוכים הבאים ל-Shiftly',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Arial',
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'האפליקציה שתעזור לך לעקוב אחרי המשמרות, השכר והטיפים שלך בקלות ובדיוק.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.grey,
+            fontFamily: 'Arial',
+          ),
+        ),
+        const SizedBox(height: 40),
+        const Text(
+          'בוא נגדיר כמה דברים בסיסיים כדי להתחיל.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Arial',
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildBreakSettingsPage() {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.timer_outlined, size: 64, color: Colors.blue),
-          const SizedBox(height: 24),
-          const Text(
-            'הגדרות הפסקה',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Arial',
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.timer_outlined, size: 64, color: Colors.blue),
+        const SizedBox(height: 24),
+        const Text(
+          'הגדרות הפסקה',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Arial',
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'כמה זמן נמשכת הפסקה בדרך כלל? (ניתן לשנות בכל משמרת)',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-              fontFamily: 'Arial',
-            ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'כמה זמן נמשכת הפסקה בדרך כלל? (ניתן לשנות בכל משמרת)',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+            fontFamily: 'Arial',
           ),
-          const SizedBox(height: 40),
-          _buildDurationSlider(
-            label: 'הפסקה בתשלום (דקות)',
-            value: _paidMinutes,
-            onChanged: (val) => setState(() => _paidMinutes = val),
-          ),
-          const SizedBox(height: 32),
-          _buildDurationSlider(
-            label: 'הפסקה ללא תשלום (דקות)',
-            value: _unpaidMinutes,
-            onChanged: (val) => setState(() => _unpaidMinutes = val),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 40),
+        _buildDurationSlider(
+          label: 'הפסקה בתשלום (דקות)',
+          value: _paidMinutes,
+          onChanged: (val) => setState(() => _paidMinutes = val),
+        ),
+        const SizedBox(height: 32),
+        _buildDurationSlider(
+          label: 'הפסקה ללא תשלום (דקות)',
+          value: _unpaidMinutes,
+          onChanged: (val) => setState(() => _unpaidMinutes = val),
+        ),
+      ],
     );
   }
 
   Widget _buildReminderSettingsPage() {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.notifications_active_outlined,
-            size: 64,
-            color: Colors.blue,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.notifications_active_outlined,
+          size: 64,
+          color: Colors.blue,
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'תזכורות למשמרת',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Arial',
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'תזכורות למשמרת',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Arial',
-            ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'האם תרצה לקבל תזכורת לפני שהמשמרת מתחילה?',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+            fontFamily: 'Arial',
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'האם תרצה לקבל תזכורת לפני שהמשמרת מתחילה?',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-              fontFamily: 'Arial',
-            ),
+        ),
+        const SizedBox(height: 40),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text(
+            'הפעל תזכורות',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          const SizedBox(height: 40),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text(
-              'הפעל תזכורות',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            subtitle: const Text('תזכורת אוטומטית לפני כל משמרת'),
-            value: _remindersEnabled,
-            onChanged: (val) async {
-              setState(() => _remindersEnabled = val);
-              if (val) {
-                await NotificationService.requestPermissions();
-              }
-            },
+          subtitle: const Text('תזכורת אוטומטית לפני כל משמרת'),
+          value: _remindersEnabled,
+          onChanged: (val) async {
+            setState(() => _remindersEnabled = val);
+            if (val) {
+              await NotificationService.requestPermissions();
+            }
+          },
+        ),
+        if (_remindersEnabled) ...[
+          const SizedBox(height: 32),
+          _buildDurationSlider(
+            label: 'כמה זמן לפני? (שעות)',
+            value: _reminderHours,
+            min: 0.5,
+            max: 24,
+            divisions: 47,
+            // 0.5 steps
+            displaySuffix: 'שעות',
+            onChanged: (val) => setState(() => _reminderHours = val),
           ),
-          if (_remindersEnabled) ...[
-            const SizedBox(height: 32),
-            _buildDurationSlider(
-              label: 'כמה זמן לפני? (שעות)',
-              value: _reminderHours,
-              min: 0.5,
-              max: 24,
-              divisions: 47,
-              // 0.5 steps
-              displaySuffix: 'שעות',
-              onChanged: (val) => setState(() => _reminderHours = val),
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 
@@ -272,7 +272,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Text(
-              '${value % 1 == 0 ? value.toInt() : value} $displaySuffix',
+              '${(value * 10).round() / 10} $displaySuffix'.replaceAll('.0 ', ' '),
               style: const TextStyle(
                 color: Colors.blue,
                 fontWeight: FontWeight.bold,
@@ -295,107 +295,118 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final shiftProvider = context.watch<ShiftProvider>();
     final jobTypes = shiftProvider.jobTypes;
 
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.work_outline, size: 64, color: Colors.blue),
-          const SizedBox(height: 24),
-          const Text(
-            'סוגי משמרות ושכר',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Arial',
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(32, 32, 32, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.work_outline, size: 64, color: Colors.blue),
+              const SizedBox(height: 24),
+              const Text(
+                'סוגי משמרות ושכר',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Arial',
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'הגדר את התפקידים השונים שלך ואת השכר לשעה.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontFamily: 'Arial',
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'הגדר את התפקידים השונים שלך ואת השכר לשעה.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-              fontFamily: 'Arial',
-            ),
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: ListView.builder(
-              itemCount: jobTypes.length,
-              itemBuilder: (context, index) {
-                final job = jobTypes[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    title: Text(
-                      job.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      '${UIUtils.formatCurrency(job.getRateForDate(DateTime.now()))} לשעה',
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => _editJobType(job),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.red,
-                          ),
-                          onPressed: () async {
-                            final provider = context.read<ShiftProvider>();
-                            final name = job.name;
-
-                            final confirmed = await UIUtils.showConfirmDialog(
-                              context: context,
-                              title: 'מחיקת תפקיד',
-                              content:
-                                  'האם אתה בטוח שברצונך למחוק את התפקיד "$name"?',
-                              isDestructive: true,
-                              confirmLabel: 'מחק',
-                            );
-
-                            if (confirmed != true) return;
-
-                            if (!context.mounted) return;
-
-                            provider.deleteJobType(job.id);
-
-                            final messenger = ScaffoldMessenger.of(context);
-                            messenger.clearSnackBars();
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text('תפקיד "$name" נמחק'),
-                                duration: const Duration(milliseconds: 4500),
-                                behavior: SnackBarBehavior.floating,
-                                action: SnackBarAction(
-                                  label: 'ביטול',
-                                  onPressed: () => provider.addJobType(job),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            itemCount: jobTypes.length + 1,
+            itemBuilder: (context, index) {
+              if (index == jobTypes.length) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  child: Center(
+                    child: TextButton.icon(
+                      onPressed: _addNewJobType,
+                      icon: const Icon(Icons.add),
+                      label: const Text('הוסף סוג משמרת'),
                     ),
                   ),
                 );
-              },
-            ),
+              }
+              final job = jobTypes[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  title: Text(
+                    job.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    '${UIUtils.formatCurrency(job.getRateForDate(DateTime.now()))} לשעה',
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined),
+                        onPressed: () => _editJobType(job),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
+                        onPressed: () async {
+                          final provider = context.read<ShiftProvider>();
+                          final name = job.name;
+
+                          final confirmed = await UIUtils.showConfirmDialog(
+                            context: context,
+                            title: 'מחיקת תפקיד',
+                            content:
+                                'האם אתה בטוח שברצונך למחוק את התפקיד "$name"?',
+                            isDestructive: true,
+                            confirmLabel: 'מחק',
+                          );
+
+                          if (confirmed != true) return;
+
+                          if (!context.mounted) return;
+
+                          provider.deleteJobType(job.id);
+
+                          final messenger = ScaffoldMessenger.of(context);
+                          messenger.clearSnackBars();
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('תפקיד "$name" נמחק'),
+                              duration: const Duration(milliseconds: 4500),
+                              behavior: SnackBarBehavior.floating,
+                              action: SnackBarAction(
+                                label: 'ביטול',
+                                onPressed: () => provider.addJobType(job),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-          TextButton.icon(
-            onPressed: _addNewJobType,
-            icon: const Icon(Icons.add),
-            label: const Text('הוסף סוג משמרת'),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -411,40 +422,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('ערוך סוג משמרת'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'שם התפקיד'),
-              ),
-              TextField(
-                controller: rateController,
-                decoration: const InputDecoration(labelText: 'שכר לשעה'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'תאריך תחילה',
-                  style: TextStyle(fontSize: 14),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'שם התפקיד'),
                 ),
-                subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
-                trailing: const Icon(Icons.calendar_today_rounded, size: 20),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: effectiveDate,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    setDialogState(() => effectiveDate = picked);
-                  }
-                },
-              ),
-            ],
+                TextField(
+                  controller: rateController,
+                  decoration: const InputDecoration(labelText: 'שכר לשעה'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'תאריך תחילה',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
+                  trailing: const Icon(Icons.calendar_today_rounded, size: 20),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: effectiveDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => effectiveDate = picked);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(

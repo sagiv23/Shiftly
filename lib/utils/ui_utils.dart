@@ -5,7 +5,11 @@ class UIUtils {
   /// Formats a double value as currency with the ₪ symbol.
   /// Example: 100.5 -> "₪100.50"
   static String formatCurrency(double amount) {
-    return '₪${amount.toStringAsFixed(2)}';
+    final formatted = amount.abs().toStringAsFixed(2);
+    if (amount < 0) {
+      return '\u200E-₪$formatted';
+    }
+    return '₪$formatted';
   }
 
   /// Returns a style for currency text using semantic profit/expense colors.
@@ -41,6 +45,21 @@ class UIUtils {
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
 
+    SnackBarAction? wrappedAction;
+    if (action != null) {
+      wrappedAction = SnackBarAction(
+        label: action.label,
+        onPressed: () {
+          messenger.hideCurrentSnackBar();
+          action.onPressed();
+        },
+        textColor: action.textColor,
+        disabledTextColor: action.disabledTextColor,
+        backgroundColor: action.backgroundColor,
+        disabledBackgroundColor: action.disabledBackgroundColor,
+      );
+    }
+
     final colorScheme = Theme.of(context).colorScheme;
     messenger.showSnackBar(
       SnackBar(
@@ -54,7 +73,7 @@ class UIUtils {
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         ),
         backgroundColor: isError ? colorScheme.error : null,
-        action: action,
+        action: wrappedAction,
       ),
     );
   }

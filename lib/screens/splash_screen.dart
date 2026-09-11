@@ -73,6 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: Container(
         width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -80,53 +81,57 @@ class _SplashScreenState extends State<SplashScreen>
             colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: const EssentialWorkIcon(size: 160),
-              ),
-            ),
-            const SizedBox(height: 40),
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: const Text(
-                'Shiftly',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 52,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Arial',
-                  letterSpacing: 1.2,
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: const EssentialWorkIcon(size: 140),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: const Text(
-                'מעקב שעות עבודה חכם',
-                style: TextStyle(
-                  color: Color(0xFF38BDF8),
-                  fontSize: 18,
-                  fontFamily: 'Arial',
-                  letterSpacing: 0.5,
+                const SizedBox(height: 32),
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: const Text(
+                    'Shiftly',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Arial',
+                      letterSpacing: 1.2,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: const Text(
+                    'מעקב שעות עבודה חכם',
+                    style: TextStyle(
+                      color: Color(0xFF38BDF8),
+                      fontSize: 16,
+                      fontFamily: 'Arial',
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 48),
+                const SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF38BDF8),
+                    strokeWidth: 3,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 60),
-            const SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(
-                color: Color(0xFF38BDF8),
-                strokeWidth: 3,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

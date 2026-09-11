@@ -90,43 +90,46 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: AppTheme.spaceXs),
         ],
       ),
-      body: Column(
-        children: [
-          if (timerProvider.startTime != null)
-            _ActiveTimerBanner(timer: timerProvider),
-          Expanded(
-            child: groupedShifts.isEmpty && timerProvider.startTime == null
-                ? _EmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppTheme.spaceSm,
-                      AppTheme.spaceXs,
-                      AppTheme.spaceSm,
-                      100,
-                    ),
-                    itemCount: groupedShifts.isEmpty
-                        ? 1
-                        : groupedShifts.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return _GrandTotalCard(
-                          totalHours: grandTotalNetHours,
-                          totalBase: grandTotalBaseSalary,
-                          totalTips: grandTotalTips,
-                          totalExpenses: grandTotalExpenses,
+      body: SafeArea(
+        bottom: true,
+        child: Column(
+          children: [
+            if (timerProvider.startTime != null)
+              _ActiveTimerBanner(timer: timerProvider),
+            Expanded(
+              child: groupedShifts.isEmpty && timerProvider.startTime == null
+                  ? _EmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppTheme.spaceSm,
+                        AppTheme.spaceXs,
+                        AppTheme.spaceSm,
+                        120, // Increased for ad space and system navigation
+                      ),
+                      itemCount: groupedShifts.isEmpty
+                          ? 1
+                          : groupedShifts.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return _GrandTotalCard(
+                            totalHours: grandTotalNetHours,
+                            totalBase: grandTotalBaseSalary,
+                            totalTips: grandTotalTips,
+                            totalExpenses: grandTotalExpenses,
+                          );
+                        }
+                        final monthKey = groupedShifts.keys.elementAt(index - 1);
+                        final shifts = groupedShifts[monthKey]!;
+                        return _MonthExpansionSection(
+                          monthKey: monthKey,
+                          shifts: shifts,
+                          initiallyExpanded: index == 1,
                         );
-                      }
-                      final monthKey = groupedShifts.keys.elementAt(index - 1);
-                      final shifts = groupedShifts[monthKey]!;
-                      return _MonthExpansionSection(
-                        monthKey: monthKey,
-                        shifts: shifts,
-                        initiallyExpanded: index == 1,
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.push(
@@ -164,35 +167,37 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceLg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spaceMd),
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spaceLg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.history_rounded,
+                  size: 56,
+                  color: AppTheme.primary.withValues(alpha: 0.7),
+                ),
               ),
-              child: Icon(
-                Icons.history_rounded,
-                size: 56,
-                color: AppTheme.primary.withValues(alpha: 0.7),
+              const SizedBox(height: AppTheme.spaceSm),
+              Text(
+                'עדיין לא נרשמו משמרות',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-            ),
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              'עדיין לא נרשמו משמרות',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppTheme.spaceXs),
-            Text(
-              'לחץ על "משמרת חדשה" כדי להתחיל',
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: AppTheme.spaceXs),
+              Text(
+                'לחץ על "משמרת חדשה" כדי להתחיל',
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
