@@ -8,7 +8,7 @@
 
 #include <flutter_timezone/flutter_timezone_plugin_c_api.h>
 
-void RegisterPlugins(flutter::PluginRegistry *registry) {
-    FlutterTimezonePluginCApiRegisterWithRegistrar(
-            registry->GetRegistrarForPlugin("FlutterTimezonePluginCApi"));
+void RegisterPlugins(flutter::PluginRegistry* registry) {
+  FlutterTimezonePluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("FlutterTimezonePluginCApi"));
 }
